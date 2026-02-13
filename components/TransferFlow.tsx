@@ -1,11 +1,14 @@
 import React, { useState, useMemo } from 'react';
 import { ArrowLeft, User, Search, Check, ChevronRight, Calendar, Info, Trash2, Edit2, Plus, AlertCircle, X, Clock, ShieldCheck, Repeat, ArrowRight } from 'lucide-react';
 
+import { api } from '../lib/api';
+
 interface Recipient {
   id: number;
   name: string;
   bank: string;
   account: string;
+  email: string;
 }
 
 interface Props {
@@ -21,7 +24,7 @@ export default function TransferFlow({ onBack, darkMode }: Props) {
   const [selectedRecipient, setSelectedRecipient] = useState<Recipient | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  
+
   // Recurring Transfer State
   const [isRecurring, setIsRecurring] = useState(false);
   const [frequency, setFrequency] = useState('MONTHLY');
@@ -38,14 +41,14 @@ export default function TransferFlow({ onBack, darkMode }: Props) {
 
   // Recipient Management State
   const [recipients, setRecipients] = useState<Recipient[]>([
-    { id: 1, name: 'Sarah Wilson', bank: 'Chase Bank', account: '...4432' },
-    { id: 2, name: 'Michael Chen', bank: 'Wells Fargo', account: '...9921' },
-    { id: 3, name: 'Jessica Davis', bank: 'Bank of America', account: '...1123' },
+    { id: 1, name: 'Sarah Wilson', bank: 'Chase Bank', account: '...4432', email: 'demo@gmail.com' },
+    { id: 2, name: 'Michael Chen', bank: 'Wells Fargo', account: '...9921', email: 'michael@example.com' },
+    { id: 3, name: 'Jessica Davis', bank: 'Bank of America', account: '...1123', email: 'jessica@example.com' },
   ]);
 
   const filteredRecipients = useMemo(() => {
-    return recipients.filter(r => 
-      r.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    return recipients.filter(r =>
+      r.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       r.bank.toLowerCase().includes(searchTerm.toLowerCase()) ||
       r.account.includes(searchTerm)
     );
@@ -70,13 +73,28 @@ export default function TransferFlow({ onBack, darkMode }: Props) {
     setStep('REVIEW');
   };
 
-  const handleFinalConfirm = () => {
+  const handleFinalConfirm = async () => {
     setShowScheduleConfirm(false);
     setIsLoading(true);
-    setTimeout(() => {
-      setIsLoading(false);
+    try {
+      if (!selectedRecipient) throw new Error("No recipient selected");
+
+      // Simulating recurring logic on backend or ignoring for MVP
+      if (!isRecurring) {
+        await api.transfer({
+          amount: parseFloat(amount),
+          recipientEmail: selectedRecipient.email
+        });
+      } else {
+        // Mock success for recurring as backend doesn't support it yet
+        await new Promise(r => setTimeout(r, 1000));
+      }
       setStep('SUCCESS');
-    }, 2500);
+    } catch (err: any) {
+      alert(err.message || "Transfer Failed");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleTransferClick = () => {
@@ -90,7 +108,7 @@ export default function TransferFlow({ onBack, darkMode }: Props) {
   const renderAmountStep = () => {
     const error = validateTransfer();
     const numAmount = parseFloat(amount) || 0;
-    
+
     return (
       <div className="flex flex-col h-full pt-6">
         <div className="px-4 overflow-y-auto no-scrollbar flex-1">
@@ -106,7 +124,7 @@ export default function TransferFlow({ onBack, darkMode }: Props) {
               autoFocus
             />
           </div>
-          
+
           {error && amount && (
             <div className="mb-6 flex items-center justify-center gap-1 text-red-500 text-xs font-bold animate-pulse">
               <AlertCircle size={14} />
@@ -117,21 +135,21 @@ export default function TransferFlow({ onBack, darkMode }: Props) {
           {/* Recurring Toggle Section */}
           <div className={`${darkMode ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-100'} p-5 rounded-3xl border shadow-sm mb-6 transition-all`}>
             <div className="flex items-center justify-between mb-4">
-               <div className="flex items-center gap-3">
-                 <div className={`p-2 rounded-xl ${darkMode ? 'bg-red-500/10 text-red-500' : 'bg-red-50 text-red-600'}`}>
-                    <Repeat size={18} />
-                 </div>
-                 <div>
-                    <h4 className={`text-sm font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>Recurring Transfer</h4>
-                    <p className="text-[10px] text-gray-500 font-medium">Automate this payment</p>
-                 </div>
-               </div>
-               <button 
+              <div className="flex items-center gap-3">
+                <div className={`p-2 rounded-xl ${darkMode ? 'bg-red-500/10 text-red-500' : 'bg-red-50 text-red-600'}`}>
+                  <Repeat size={18} />
+                </div>
+                <div>
+                  <h4 className={`text-sm font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>Recurring Transfer</h4>
+                  <p className="text-[10px] text-gray-500 font-medium">Automate this payment</p>
+                </div>
+              </div>
+              <button
                 onClick={() => setIsRecurring(!isRecurring)}
                 className={`w-12 h-6 rounded-full relative transition-all duration-300 ${isRecurring ? 'bg-red-600' : 'bg-gray-300'}`}
-               >
-                 <div className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow-sm transition-all duration-300 ${isRecurring ? 'right-1' : 'left-1'}`}></div>
-               </button>
+              >
+                <div className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow-sm transition-all duration-300 ${isRecurring ? 'right-1' : 'left-1'}`}></div>
+              </button>
             </div>
 
             {isRecurring && (
@@ -139,7 +157,7 @@ export default function TransferFlow({ onBack, darkMode }: Props) {
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 block">Frequency</label>
-                    <select 
+                    <select
                       value={frequency}
                       onChange={(e) => setFrequency(e.target.value)}
                       className={`w-full text-xs font-bold p-3 rounded-xl outline-none border transition-colors ${darkMode ? 'bg-gray-800 border-gray-700 text-white' : 'bg-gray-50 border-gray-200 text-gray-900'}`}
@@ -152,7 +170,7 @@ export default function TransferFlow({ onBack, darkMode }: Props) {
                   </div>
                   <div>
                     <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 block">Start Date</label>
-                    <input 
+                    <input
                       type="date"
                       value={startDate}
                       onChange={(e) => setStartDate(e.target.value)}
@@ -162,7 +180,7 @@ export default function TransferFlow({ onBack, darkMode }: Props) {
                 </div>
                 <div>
                   <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 block">End Date (Optional)</label>
-                  <input 
+                  <input
                     type="date"
                     value={endDate}
                     onChange={(e) => setEndDate(e.target.value)}
@@ -175,16 +193,16 @@ export default function TransferFlow({ onBack, darkMode }: Props) {
 
           {/* Limits Visualization */}
           <div className={`${darkMode ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-100'} p-4 rounded-2xl border shadow-sm`}>
-             <div className="flex justify-between items-center mb-2">
-                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Daily Limit Usage</span>
-                <span className={`text-[10px] font-bold ${darkMode ? 'text-gray-200' : 'text-gray-900'}`}>${limits.currentDailyUsed + numAmount} / ${limits.daily}</span>
-             </div>
-             <div className={`w-full h-1.5 rounded-full overflow-hidden ${darkMode ? 'bg-gray-800' : 'bg-gray-100'}`}>
-                <div 
-                  className={`h-full transition-all duration-500 ${ (limits.currentDailyUsed + numAmount) > limits.daily ? 'bg-red-500' : 'bg-red-600' }`} 
-                  style={{ width: `${Math.min(100, ((limits.currentDailyUsed + numAmount) / limits.daily) * 100)}%` }}
-                ></div>
-             </div>
+            <div className="flex justify-between items-center mb-2">
+              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Daily Limit Usage</span>
+              <span className={`text-[10px] font-bold ${darkMode ? 'text-gray-200' : 'text-gray-900'}`}>${limits.currentDailyUsed + numAmount} / ${limits.daily}</span>
+            </div>
+            <div className={`w-full h-1.5 rounded-full overflow-hidden ${darkMode ? 'bg-gray-800' : 'bg-gray-100'}`}>
+              <div
+                className={`h-full transition-all duration-500 ${(limits.currentDailyUsed + numAmount) > limits.daily ? 'bg-red-500' : 'bg-red-600'}`}
+                style={{ width: `${Math.min(100, ((limits.currentDailyUsed + numAmount) / limits.daily) * 100)}%` }}
+              ></div>
+            </div>
           </div>
         </div>
 
@@ -214,7 +232,7 @@ export default function TransferFlow({ onBack, darkMode }: Props) {
             </div>
             <h3 className={`text-xl font-black tracking-tight mb-2 ${darkMode ? 'text-white' : 'text-gray-900'}`}>Confirm Schedule</h3>
             <p className="text-xs text-gray-500 font-medium mb-8">Please review your automated payment instructions.</p>
-            
+
             <div className="w-full space-y-4 mb-8">
               <div className="flex justify-between items-center py-3 border-b border-gray-800/20">
                 <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Amount</span>
@@ -237,13 +255,13 @@ export default function TransferFlow({ onBack, darkMode }: Props) {
             </div>
 
             <div className="flex gap-3 w-full">
-              <button 
+              <button
                 onClick={() => setShowScheduleConfirm(false)}
                 className={`flex-1 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${darkMode ? 'bg-gray-800 text-gray-400 hover:bg-gray-700' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
               >
                 Modify
               </button>
-              <button 
+              <button
                 onClick={handleFinalConfirm}
                 className="flex-[2] py-4 rounded-2xl bg-red-600 text-white text-[10px] font-black uppercase tracking-widest shadow-lg shadow-red-900/20 hover:bg-red-700 active:scale-95 transition-all"
               >
@@ -261,10 +279,10 @@ export default function TransferFlow({ onBack, darkMode }: Props) {
       {/* Processing Overlay */}
       {isLoading && (
         <div className="absolute inset-0 z-50 bg-black/40 backdrop-blur-md flex flex-col items-center justify-center text-white animate-in fade-in duration-300">
-           <div className="w-16 h-16 border-4 border-white/20 border-t-red-600 rounded-full animate-spin mb-6"></div>
-           <ShieldCheck size={32} className="text-red-600 mb-2 animate-bounce" />
-           <p className="font-black text-xs uppercase tracking-widest">Securing Transaction</p>
-           <p className="text-[10px] opacity-60 mt-1 uppercase tracking-tight">Verifying credentials and limits...</p>
+          <div className="w-16 h-16 border-4 border-white/20 border-t-red-600 rounded-full animate-spin mb-6"></div>
+          <ShieldCheck size={32} className="text-red-600 mb-2 animate-bounce" />
+          <p className="font-black text-xs uppercase tracking-widest">Securing Transaction</p>
+          <p className="text-[10px] opacity-60 mt-1 uppercase tracking-tight">Verifying credentials and limits...</p>
         </div>
       )}
 
@@ -272,12 +290,12 @@ export default function TransferFlow({ onBack, darkMode }: Props) {
 
       <div className="flex-1">
         <h2 className={`text-2xl font-black tracking-tighter mb-6 ${darkMode ? 'text-white' : 'text-gray-900'}`}>Review Transfer</h2>
-        
+
         <div className={`${darkMode ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-100'} rounded-[32px] shadow-sm border overflow-hidden mb-6`}>
           <div className={`p-8 flex flex-col items-center border-b relative group ${darkMode ? 'border-gray-800' : 'border-gray-50'}`}>
             <span className="text-gray-400 text-[10px] font-black uppercase tracking-[0.2em] mb-2">Amount to Send</span>
             <div className="flex items-center gap-2">
-                <span className={`text-4xl font-black ${darkMode ? 'text-white' : 'text-gray-900'}`}>${parseFloat(amount).toFixed(2)}</span>
+              <span className={`text-4xl font-black ${darkMode ? 'text-white' : 'text-gray-900'}`}>${parseFloat(amount).toFixed(2)}</span>
             </div>
             {isRecurring && (
               <div className="mt-4 flex items-center gap-1.5 px-3 py-1 bg-red-600/10 text-red-600 rounded-full border border-red-600/10">
@@ -286,7 +304,7 @@ export default function TransferFlow({ onBack, darkMode }: Props) {
               </div>
             )}
           </div>
-          
+
           <div className="p-6 space-y-5">
             <div className="flex justify-between items-center">
               <span className="text-gray-400 text-[9px] font-black uppercase tracking-widest">Recipient</span>
@@ -314,12 +332,12 @@ export default function TransferFlow({ onBack, darkMode }: Props) {
 
       <div className="mt-6">
         <button
-            onClick={handleTransferClick}
-            disabled={isLoading}
-            className="w-full bg-red-600 text-white font-black uppercase tracking-widest py-4 rounded-2xl shadow-lg hover:bg-red-700 transition-all active:scale-95 flex items-center justify-center gap-2 shadow-red-900/20 text-xs"
+          onClick={handleTransferClick}
+          disabled={isLoading}
+          className="w-full bg-red-600 text-white font-black uppercase tracking-widest py-4 rounded-2xl shadow-lg hover:bg-red-700 transition-all active:scale-95 flex items-center justify-center gap-2 shadow-red-900/20 text-xs"
         >
-            {isRecurring ? 'Setup Schedule' : 'Confirm & Send Money'}
-            <ArrowRight size={16} />
+          {isRecurring ? 'Setup Schedule' : 'Confirm & Send Money'}
+          <ArrowRight size={16} />
         </button>
       </div>
     </div>
@@ -327,28 +345,28 @@ export default function TransferFlow({ onBack, darkMode }: Props) {
 
   const renderSuccessStep = () => (
     <div className={`h-full flex flex-col items-center justify-center p-8 text-center relative transition-colors duration-300 ${darkMode ? 'bg-gray-950' : 'bg-white'}`}>
-        <div className="z-10 relative animate-in zoom-in-95 duration-500">
-            <div className={`w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner ${darkMode ? 'bg-green-900/30 text-green-400 border border-green-800' : 'bg-green-100 text-green-600'}`}>
-                {isRecurring ? <Repeat size={48} className="drop-shadow-sm" /> : <Check size={48} className="drop-shadow-sm" />}
-            </div>
-            <h2 className={`text-3xl font-black tracking-tighter mb-2 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-              {isRecurring ? 'Schedule Active' : 'Transfer Successful!'}
-            </h2>
-            <p className="text-gray-500 mb-8 max-w-[240px] mx-auto leading-relaxed text-sm font-medium">
-                {isRecurring 
-                  ? `Your automated ${frequency.toLowerCase()} transfer of $${parseFloat(amount).toFixed(2)} to ${selectedRecipient?.name} has been initiated.`
-                  : `Sent $${parseFloat(amount).toFixed(2)} to ${selectedRecipient?.name} securely.`
-                }
-            </p>
-            
-            <div className="w-full max-w-xs mx-auto space-y-3">
-                <button 
-                  onClick={onBack}
-                  className="w-full bg-red-600 text-white font-black uppercase tracking-widest py-4 rounded-2xl shadow-xl hover:bg-red-700 transition-all active:scale-95 shadow-red-900/20 text-xs"
-                >
-                Return to Dashboard
-                </button>
-            </div>
+      <div className="z-10 relative animate-in zoom-in-95 duration-500">
+        <div className={`w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner ${darkMode ? 'bg-green-900/30 text-green-400 border border-green-800' : 'bg-green-100 text-green-600'}`}>
+          {isRecurring ? <Repeat size={48} className="drop-shadow-sm" /> : <Check size={48} className="drop-shadow-sm" />}
+        </div>
+        <h2 className={`text-3xl font-black tracking-tighter mb-2 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+          {isRecurring ? 'Schedule Active' : 'Transfer Successful!'}
+        </h2>
+        <p className="text-gray-500 mb-8 max-w-[240px] mx-auto leading-relaxed text-sm font-medium">
+          {isRecurring
+            ? `Your automated ${frequency.toLowerCase()} transfer of $${parseFloat(amount).toFixed(2)} to ${selectedRecipient?.name} has been initiated.`
+            : `Sent $${parseFloat(amount).toFixed(2)} to ${selectedRecipient?.name} securely.`
+          }
+        </p>
+
+        <div className="w-full max-w-xs mx-auto space-y-3">
+          <button
+            onClick={onBack}
+            className="w-full bg-red-600 text-white font-black uppercase tracking-widest py-4 rounded-2xl shadow-xl hover:bg-red-700 transition-all active:scale-95 shadow-red-900/20 text-xs"
+          >
+            Return to Dashboard
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -358,8 +376,8 @@ export default function TransferFlow({ onBack, darkMode }: Props) {
       <div className="px-4 mb-4">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
-          <input 
-            type="text" 
+          <input
+            type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Search by name, bank, or account..."
@@ -367,7 +385,7 @@ export default function TransferFlow({ onBack, darkMode }: Props) {
           />
         </div>
       </div>
-      
+
       <div className="flex-1 px-4 overflow-y-auto pb-6 no-scrollbar">
         <div className="space-y-3">
           {filteredRecipients.map(r => (
@@ -397,14 +415,14 @@ export default function TransferFlow({ onBack, darkMode }: Props) {
     <div className={`flex flex-col h-full transition-colors duration-300 ${darkMode ? 'bg-gray-950' : 'bg-gray-50'} overflow-hidden`}>
       <div className={`${darkMode ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-100'} px-4 py-3 flex items-center gap-4 shadow-sm sticky top-0 z-40 border-b`}>
         <button onClick={() => {
-            if (step === 'AMOUNT') onBack();
-            else if (step === 'RECIPIENT') setStep('AMOUNT');
-            else if (step === 'REVIEW') setStep('RECIPIENT');
+          if (step === 'AMOUNT') onBack();
+          else if (step === 'RECIPIENT') setStep('AMOUNT');
+          else if (step === 'REVIEW') setStep('RECIPIENT');
         }} className={`p-1 rounded-full transition-colors ${darkMode ? 'hover:bg-gray-800 text-white' : 'hover:bg-gray-100 text-gray-700'}`}>
           <ArrowLeft className="w-6 h-6" />
         </button>
         <h1 className={`text-sm font-black uppercase tracking-widest ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-            {step === 'AMOUNT' ? 'Transfer' : step === 'RECIPIENT' ? 'Recipient' : 'Review'}
+          {step === 'AMOUNT' ? 'Transfer' : step === 'RECIPIENT' ? 'Recipient' : 'Review'}
         </h1>
       </div>
 

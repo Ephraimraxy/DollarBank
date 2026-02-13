@@ -20,7 +20,7 @@ export default function App() {
     const isAuth = localStorage.getItem('vault-session-active');
     return isAuth ? ViewState.HOME : ViewState.SPLASH;
   });
-  
+
   const [user, setUser] = useState(() => {
     const saved = localStorage.getItem('vault-id-user-identity');
     return saved ? JSON.parse(saved) : {
@@ -48,7 +48,7 @@ export default function App() {
     localStorage.setItem('vault-session-active', 'true');
     setIsAuthenticating(true);
     setAuthStage('SCANNING');
-    
+
     setTimeout(() => setAuthStage('SUCCESS'), 1200);
     setTimeout(() => {
       setIsAuthenticating(false);
@@ -68,37 +68,36 @@ export default function App() {
           <h1 className={`text-sm font-black tracking-[0.3em] uppercase leading-none ${darkMode ? 'text-white' : 'text-gray-900'}`}>
             vault_<span className="text-red-600">id</span>
           </h1>
-          <div className={`px-1.5 py-0.5 rounded border text-[7px] font-black uppercase tracking-widest ${
-            darkMode 
-              ? 'bg-red-500/10 border-red-500/30 text-red-500' 
+          <div className={`px-1.5 py-0.5 rounded border text-[7px] font-black uppercase tracking-widest ${darkMode
+              ? 'bg-red-500/10 border-red-500/30 text-red-500'
               : 'bg-red-50 border-red-200 text-red-700'
-          }`}>
+            }`}>
             Secure
           </div>
         </div>
       </div>
-      
+
       <div className="flex items-center space-x-1">
-        <button 
+        <button
           onClick={() => setCurrentView(ViewState.NOTIFICATIONS)}
           className={`relative p-2 rounded-xl transition-all active:scale-90 ${darkMode ? 'hover:bg-gray-800' : 'hover:bg-gray-100'}`}
         >
           <Bell className={`w-5 h-5 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`} />
           <span className="absolute top-2 right-2 bg-red-600 text-white text-[9px] font-black px-1 py-0.5 rounded-full border-2 border-white leading-none">2</span>
         </button>
-        
-        <button 
-            onClick={() => setCurrentView(ViewState.PROFILE)}
-            className="active:scale-95 transition-transform ml-1 p-0.5"
+
+        <button
+          onClick={() => setCurrentView(ViewState.PROFILE)}
+          className="active:scale-95 transition-transform ml-1 p-0.5"
         >
-            <div className="relative group">
-                <div className="absolute -inset-1 bg-gradient-to-r from-red-600 to-amber-500 rounded-full opacity-20 group-hover:opacity-40 transition-opacity blur-sm"></div>
-                <img 
-                    src="https://picsum.photos/100/100" 
-                    alt="Profile" 
-                    className={`relative w-9 h-9 rounded-full border-2 object-cover shadow-sm ${darkMode ? 'border-gray-800' : 'border-white'}`}
-                />
-            </div>
+          <div className="relative group">
+            <div className="absolute -inset-1 bg-gradient-to-r from-red-600 to-amber-500 rounded-full opacity-20 group-hover:opacity-40 transition-opacity blur-sm"></div>
+            <img
+              src="https://picsum.photos/100/100"
+              alt="Profile"
+              className={`relative w-9 h-9 rounded-full border-2 object-cover shadow-sm ${darkMode ? 'border-gray-800' : 'border-white'}`}
+            />
+          </div>
         </button>
       </div>
     </div>
@@ -116,7 +115,7 @@ export default function App() {
           </div>
           <div className="mt-12 text-center">
             <h2 className={`text-sm font-black uppercase tracking-[0.5em] mb-2 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-               {authStage === 'SUCCESS' ? 'Verified' : 'Accessing Vault'}
+              {authStage === 'SUCCESS' ? 'Verified' : 'Accessing Vault'}
             </h2>
           </div>
         </div>
@@ -132,7 +131,7 @@ export default function App() {
       case ViewState.SIGN_UP:
       case ViewState.FORGOT_PASSWORD:
       case ViewState.REVERIFY:
-        return <AuthFlow currentView={currentView} setView={setCurrentView} onLogin={handleLoginSuccess} darkMode={darkMode} setDarkMode={setDarkMode} />;
+        return <AuthFlow currentView={currentView} setView={setCurrentView} onLogin={handleLoginSuccess} darkMode={darkMode} setDarkMode={setDarkMode} setUser={setUser} />;
       case ViewState.HOME:
         return <Dashboard user={user} onViewChange={setCurrentView} darkMode={darkMode} />;
       case ViewState.TRANSFER:
@@ -163,7 +162,7 @@ export default function App() {
   return (
     <div className={`max-w-md mx-auto h-[100dvh] flex flex-col overflow-hidden shadow-2xl relative transition-colors duration-300 ${darkMode ? 'bg-gray-950' : 'bg-gray-50'}`}>
       {!isAuthView && <Header />}
-      
+
       <main className="flex-1 overflow-y-auto no-scrollbar pb-20">
         {renderContent()}
       </main>
@@ -171,11 +170,10 @@ export default function App() {
       {!isAuthView && <AiAssistant user={user} darkMode={darkMode} />}
 
       {!isAuthView && (
-        <div className={`border-t flex justify-around items-stretch px-2 fixed bottom-0 w-full max-w-md z-50 transition-all duration-500 h-[72px] ${
-          darkMode 
-            ? 'bg-gray-950/90 border-gray-800 backdrop-blur-xl shadow-[0_-10px_30px_rgba(0,0,0,0.5)]' 
+        <div className={`border-t flex justify-around items-stretch px-2 fixed bottom-0 w-full max-w-md z-50 transition-all duration-500 h-[72px] ${darkMode
+            ? 'bg-gray-950/90 border-gray-800 backdrop-blur-xl shadow-[0_-10px_30px_rgba(0,0,0,0.5)]'
             : 'bg-white/90 border-gray-100 backdrop-blur-xl shadow-[0_-10px_30px_rgba(0,0,0,0.05)]'
-        }`}>
+          }`}>
           <NavButton icon={<Home size={20} />} label="Home" isActive={currentView === ViewState.HOME} onClick={() => setCurrentView(ViewState.HOME)} darkMode={darkMode} />
           <NavButton icon={<ArrowRightLeft size={20} />} label="Transfer" isActive={currentView === ViewState.TRANSFER} onClick={() => setCurrentView(ViewState.TRANSFER)} darkMode={darkMode} />
           <NavButton icon={<CreditCard size={20} />} label="Cards" isActive={currentView === ViewState.CARDS} onClick={() => setCurrentView(ViewState.CARDS)} darkMode={darkMode} />

@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { GoogleGenAI } from '@google/genai';
+import { api } from '../lib/api';
 import { Send, X, Bot, Sparkles, ShieldCheck } from 'lucide-react';
 
 interface Props {
@@ -36,28 +36,14 @@ export default function AiAssistant({ user, darkMode }: Props) {
     setIsTyping(true);
 
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-      const response = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
-        contents: [
-          ...messages.map(m => ({
-            role: m.role,
-            parts: [{ text: m.text }]
-          })),
-          { role: 'user', parts: [{ text: userMessage }] }
-        ],
-        config: {
-          systemInstruction: `You are the Platinum Private Banking Concierge. 
-          Your client is ${user.fullName.toUpperCase()}. 
-          Maintain a formal, elite, and helpful tone. 
-          Context: Liquid Balance: $84,392.42. Holdings Profit: +18.2%. 
-          Be discreet and never reveal sensitive credentials.`,
-          temperature: 0.6,
-        }
-      });
+      const chatHistory = messages.map(m => ({
+        role: m.role,
+        parts: [{ text: m.text }]
+      }));
+      chatHistory.push({ role: 'user', parts: [{ text: userMessage }] });
 
-      const responseText = response.text || "I apologize, our secure satellite link is experiencing interference. Please repeat your query.";
-      setMessages(prev => [...prev, { role: 'model', text: responseText }]);
+      const data = await api.chat(chatHistory);
+      setMessages(prev => [...prev, { role: 'model', text: data.text }]);
     } catch (error) {
       setMessages(prev => [...prev, { role: 'model', text: "Connection encrypted. Session timeout. Please retry." }]);
     } finally {
@@ -75,9 +61,8 @@ export default function AiAssistant({ user, darkMode }: Props) {
       )}
 
       {isOpen && (
-        <div className={`fixed bottom-24 right-6 w-[calc(100%-3rem)] max-w-[350px] h-[550px] rounded-[32px] shadow-2xl flex flex-col overflow-hidden z-[60] border animate-in slide-in-from-bottom-4 duration-500 ${
-          darkMode ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-100'
-        }`}>
+        <div className={`fixed bottom-24 right-6 w-[calc(100%-3rem)] max-w-[350px] h-[550px] rounded-[32px] shadow-2xl flex flex-col overflow-hidden z-[60] border animate-in slide-in-from-bottom-4 duration-500 ${darkMode ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-100'
+          }`}>
           {/* Header */}
           <div className="bg-gradient-to-r from-red-600 to-red-800 p-5 text-white flex justify-between items-center">
             <div className="flex items-center gap-3">
@@ -98,11 +83,10 @@ export default function AiAssistant({ user, darkMode }: Props) {
           <div ref={scrollRef} className={`flex-1 overflow-y-auto p-5 space-y-4 no-scrollbar ${darkMode ? 'bg-gray-950' : 'bg-gray-50'}`}>
             {messages.map((m, idx) => (
               <div key={idx} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                <div className={`max-w-[85%] p-4 rounded-2xl text-[13px] font-medium leading-relaxed ${
-                  m.role === 'user' 
-                    ? 'bg-red-600 text-white rounded-tr-none shadow-lg' 
-                    : `${darkMode ? 'bg-gray-900 text-gray-200 border-gray-800' : 'bg-white text-gray-800 border-gray-200'} rounded-tl-none border shadow-sm`
-                }`}>
+                <div className={`max-w-[85%] p-4 rounded-2xl text-[13px] font-medium leading-relaxed ${m.role === 'user'
+                  ? 'bg-red-600 text-white rounded-tr-none shadow-lg'
+                  : `${darkMode ? 'bg-gray-900 text-gray-200 border-gray-800' : 'bg-white text-gray-800 border-gray-200'} rounded-tl-none border shadow-sm`
+                  }`}>
                   {m.text}
                 </div>
               </div>
@@ -120,8 +104,7 @@ export default function AiAssistant({ user, darkMode }: Props) {
 
           <div className={`p-4 border-t ${darkMode ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-100'}`}>
             <div className="flex gap-2">
-              <input type="text" value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleSend()} placeholder="Consult with AI..." className={`flex-1 text-sm font-bold border-none rounded-2xl py-3 px-4 outline-none focus:ring-2 focus:ring-red-500/50 ${
-                  darkMode ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-900'
+              <input type="text" value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleSend()} placeholder="Consult with AI..." className={`flex-1 text-sm font-bold border-none rounded-2xl py-3 px-4 outline-none focus:ring-2 focus:ring-red-500/50 ${darkMode ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-900'
                 }`} />
               <button onClick={handleSend} disabled={!input.trim() || isTyping} className="w-12 h-12 bg-red-600 text-white rounded-2xl flex items-center justify-center hover:bg-red-700 active:scale-95 transition-all disabled:opacity-50">
                 <Send size={18} />

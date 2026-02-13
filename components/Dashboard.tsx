@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ViewState } from '../types';
+import { api } from '../lib/api';
 import { Eye, EyeOff, ArrowUpRight, ArrowDownLeft, Wallet, ShieldCheck, ChevronRight, TrendingUp, Sparkles } from 'lucide-react';
 
 interface Props {
@@ -11,11 +12,24 @@ interface Props {
 export default function Dashboard({ user, onViewChange, darkMode }: Props) {
   const [showBalance, setShowBalance] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
+  const [accounts, setAccounts] = useState<any[]>([]);
 
   useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 1200); // Slightly longer for more "perceived" work
-    return () => clearTimeout(timer);
+    const fetchData = async () => {
+      try {
+        const data = await api.getAccounts();
+        setAccounts(data);
+      } catch (err) {
+        console.error('Failed to fetch accounts', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchData();
   }, []);
+
+  const totalBalance = accounts.reduce((sum, acc) => sum + parseFloat(acc.balance), 0);
+  const formattedTotal = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(totalBalance);
 
   if (isLoading) {
     return (
@@ -35,7 +49,7 @@ export default function Dashboard({ user, onViewChange, darkMode }: Props) {
             animation: shimmerEffect 1.5s infinite linear;
           }
         `}</style>
-        
+
         {/* Welcome Greeting Skeleton */}
         <div className="px-6 pt-6 pb-2 space-y-3">
           <div className="w-24 h-3 skeleton-shimmer rounded-full" />
@@ -80,7 +94,7 @@ export default function Dashboard({ user, onViewChange, darkMode }: Props) {
       <div className="p-4">
         <div className="bg-gradient-to-br from-red-700 via-red-800 to-red-950 rounded-[32px] p-8 text-white shadow-2xl relative overflow-hidden group">
           <div className="absolute top-0 right-0 -mt-10 -mr-10 w-40 h-40 bg-white opacity-5 rounded-full blur-3xl group-hover:scale-125 transition-transform duration-1000"></div>
-          
+
           <div className="relative z-10">
             <div className="flex justify-between items-center mb-4 opacity-70">
               <span className="text-[10px] font-black uppercase tracking-[0.2em]">Liquid Assets</span>
@@ -88,9 +102,9 @@ export default function Dashboard({ user, onViewChange, darkMode }: Props) {
                 {showBalance ? <Eye size={18} /> : <EyeOff size={18} />}
               </button>
             </div>
-            
+
             <div className="text-4xl font-black mb-8 tracking-tighter">
-              {showBalance ? '$84,392.42' : '••••••••'}
+              {showBalance ? formattedTotal : '••••••••'}
             </div>
 
             <div className="flex gap-3">
@@ -124,35 +138,29 @@ export default function Dashboard({ user, onViewChange, darkMode }: Props) {
       {/* Accounts */}
       <div className="px-4 space-y-4">
         <h3 className={`text-[10px] font-black uppercase tracking-[0.2em] mb-4 px-2 ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>Private Accounts</h3>
-        <AccountCard 
-          title="Master Checking" 
-          number=".... 352521167" 
-          balance="$12,450.20" 
-          change="+12.5%" 
-          showBalance={showBalance} 
-          darkMode={darkMode}
-          onClick={() => onViewChange(ViewState.ACTIVITY)}
-        />
-        <AccountCard 
-          title="Elite Savings" 
-          number=".... 2431176111" 
-          balance="$71,942.22" 
-          change="+3.5%" 
-          showBalance={showBalance} 
-          darkMode={darkMode}
-          onClick={() => onViewChange(ViewState.ACTIVITY)}
-        />
+        {accounts.map(acc => (
+          <AccountCard
+            key={acc.id}
+            title={`${acc.type} Account`}
+            number={`.... ${acc.account_number.slice(-4)}`}
+            balance={new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(acc.balance)}
+            change="+0.0%"
+            showBalance={showBalance}
+            darkMode={darkMode}
+            onClick={() => onViewChange(ViewState.ACTIVITY)}
+          />
+        ))}
+        {accounts.length === 0 && <div className="text-center text-gray-500 text-xs py-4">No active accounts found.</div>}
       </div>
     </div>
   );
 }
 
 const AccountCard = ({ title, number, balance, change, showBalance, darkMode, onClick }: any) => (
-  <div onClick={onClick} className={`rounded-[24px] p-6 shadow-xl relative overflow-hidden cursor-pointer active:scale-[0.98] transition-all border ${
-    darkMode 
-      ? 'bg-gradient-to-br from-gray-900 to-red-950/20 border-red-900/30' 
-      : 'bg-white border-gray-100'
-  }`}>
+  <div onClick={onClick} className={`rounded-[24px] p-6 shadow-xl relative overflow-hidden cursor-pointer active:scale-[0.98] transition-all border ${darkMode
+    ? 'bg-gradient-to-br from-gray-900 to-red-950/20 border-red-900/30'
+    : 'bg-white border-gray-100'
+    }`}>
     <div className="flex justify-between items-start mb-6">
       <div>
         <div className={`text-[10px] font-black uppercase tracking-widest ${darkMode ? 'text-red-500/70' : 'text-gray-400'}`}>{title}</div>
