@@ -4,7 +4,7 @@ import { api } from '../src/lib/api';
 import { Eye, EyeOff, ArrowUpRight, ArrowDownLeft, Wallet, ShieldCheck, ChevronRight, TrendingUp, Sparkles } from 'lucide-react';
 
 interface Props {
-  user: { fullName: string };
+  user: { fullName?: string };
   onViewChange: (view: ViewState) => void;
   darkMode: boolean;
 }
@@ -82,6 +82,8 @@ export default function Dashboard({ user, onViewChange, darkMode }: Props) {
     );
   }
 
+  const firstName = (user?.fullName || '').split(' ')[0] || 'Guest';
+
   return (
     <div className="pb-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
       {/* Welcome Greeting */}
@@ -91,7 +93,7 @@ export default function Dashboard({ user, onViewChange, darkMode }: Props) {
           <span className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500">vault_id Active</span>
         </div>
         <h2 className={`text-2xl font-black tracking-tighter ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-          Welcome, <span className="text-red-600">{user.fullName.split(' ')[0]}</span>
+          Welcome, <span className="text-red-600">{firstName}</span>
         </h2>
       </div>
 

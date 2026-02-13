@@ -41,9 +41,16 @@ export default function AuthFlow({ currentView, setView, onLogin, darkMode, setD
       }
 
       const { user, token } = response;
+
+      // Normalize user shape between API (full_name) and frontend (fullName)
+      const normalizedUser = {
+        ...user,
+        fullName: user.fullName || user.full_name || '',
+      };
+
       localStorage.setItem('vault_token', token);
-      localStorage.setItem('vault-id-user-identity', JSON.stringify(user));
-      setUser(user); // Update App state
+      localStorage.setItem('vault-id-user-identity', JSON.stringify(normalizedUser));
+      setUser(normalizedUser); // Update App state
       onLogin();
     } catch (err: any) {
       setError(err.message || 'Authentication Failed');

@@ -3,7 +3,7 @@ import { api } from '../src/lib/api';
 import { Send, X, Bot, Sparkles, ShieldCheck } from 'lucide-react';
 
 interface Props {
-  user: { fullName: string };
+  user: { fullName?: string };
   darkMode: boolean;
 }
 
@@ -13,10 +13,14 @@ interface Message {
 }
 
 export default function AiAssistant({ user, darkMode }: Props) {
+  const firstName = (user?.fullName || '').split(' ')[0] || 'Guest';
   const [isOpen, setIsOpen] = useState(false);
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState<Message[]>([
-    { role: 'model', text: `Good evening, ${user.fullName.split(' ')[0]}. How may I assist with your Platinum portfolio today?` }
+    {
+      role: 'model',
+      text: `Good evening, ${firstName}. How may I assist with your Platinum portfolio today?`
+    }
   ]);
   const [isTyping, setIsTyping] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
