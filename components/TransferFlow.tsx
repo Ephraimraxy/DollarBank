@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { ArrowLeft, User, Search, Check, ChevronRight, Calendar, Info, Trash2, Edit2, Plus, AlertCircle, X, Clock, ShieldCheck, Repeat, ArrowRight } from 'lucide-react';
 
-import { api } from '../lib/api';
+import { api } from '../src/lib/api';
 
 interface Recipient {
   id: number;

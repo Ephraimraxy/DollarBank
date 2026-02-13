@@ -10,7 +10,7 @@ interface Props {
   setDarkMode: (value: boolean) => void;
 }
 
-import { api } from '../lib/api';
+import { api } from '../src/lib/api';
 
 interface Props {
   currentView: ViewState;

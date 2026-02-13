@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { api } from '../lib/api';
+import { api } from '../src/lib/api';
 import { Send, X, Bot, Sparkles, ShieldCheck } from 'lucide-react';
 
 interface Props {

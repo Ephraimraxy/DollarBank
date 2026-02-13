@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ViewState } from '../types';
-import { api } from '../lib/api';
+import { api } from '../src/lib/api';
 import { Eye, EyeOff, ArrowUpRight, ArrowDownLeft, Wallet, ShieldCheck, ChevronRight, TrendingUp, Sparkles } from 'lucide-react';
 
 interface Props {
