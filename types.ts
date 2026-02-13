@@ -1,0 +1,34 @@
+export enum ViewState {
+  SPLASH = 'SPLASH',
+  SIGN_IN = 'SIGN_IN',
+  SIGN_UP = 'SIGN_UP',
+  FORGOT_PASSWORD = 'FORGOT_PASSWORD',
+  REVERIFY = 'REVERIFY',
+  HOME = 'HOME',
+  TRANSFER = 'TRANSFER',
+  CARDS = 'CARDS',
+  INVEST = 'INVEST',
+  ACTIVITY = 'ACTIVITY',
+  NOTIFICATIONS = 'NOTIFICATIONS',
+  FEE_PAYMENT = 'FEE_PAYMENT',
+  PROFILE = 'PROFILE',
+  REQUEST = 'REQUEST',
+  SUPPORT = 'SUPPORT',
+  LIVE_CHAT = 'LIVE_CHAT'
+}
+
+export interface Transaction {
+  id: string;
+  recipientName: string;
+  amount: number;
+  date: string;
+  status: 'Completed' | 'Pending' | 'Failed';
+  reference: string;
+}
+
+export interface Account {
+  name: string;
+  number: string;
+  balance: number;
+  type: 'Checking' | 'Savings';
+}

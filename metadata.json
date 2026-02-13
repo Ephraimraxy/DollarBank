@@ -1,0 +1,7 @@
+{
+  "name": "vault_id",
+  "description": "An elite private banking digital ecosystem for secure asset management.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}
