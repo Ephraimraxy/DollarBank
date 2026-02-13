@@ -8,7 +8,7 @@ const resend = process.env.RESEND_API_KEY
     ? new Resend(process.env.RESEND_API_KEY)
     : null;
 
-const EMAIL_FROM = 'Vault ID <onboarding@resend.dev>'; // Update this with your verified domain later
+const EMAIL_FROM = process.env.RESEND_FROM_EMAIL || 'Vault ID <onboarding@resend.dev>'; // Uses branded domain when configured
 
 export const sendEmail = async (to, subject, html) => {
     if (!resend) {

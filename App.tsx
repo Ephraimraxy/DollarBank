@@ -13,12 +13,23 @@ import Invest from './components/Invest';
 import AiAssistant from './components/AiAssistant';
 import Splash from './components/Splash';
 import AuthFlow from './components/AuthFlow';
+import VerifyEmail from './components/VerifyEmail';
+import ResetPassword from './components/ResetPassword';
 import { ViewState } from './types';
 import { ErrorBoundary } from './components/ErrorBoundary';
 
 export default function App() {
   const [currentView, setCurrentView] = useState<ViewState>(() => {
     const isAuth = localStorage.getItem('vault-session-active');
+
+    const path = window.location.pathname;
+    if (path.startsWith('/verify')) {
+      return ViewState.VERIFY_EMAIL;
+    }
+    if (path.startsWith('/reset-password')) {
+      return ViewState.RESET_PASSWORD;
+    }
+
     return isAuth ? ViewState.HOME : ViewState.SPLASH;
   });
 
@@ -133,6 +144,10 @@ export default function App() {
       case ViewState.FORGOT_PASSWORD:
       case ViewState.REVERIFY:
         return <AuthFlow currentView={currentView} setView={setCurrentView} onLogin={handleLoginSuccess} darkMode={darkMode} setDarkMode={setDarkMode} setUser={setUser} />;
+      case ViewState.VERIFY_EMAIL:
+        return <VerifyEmail setView={setCurrentView} darkMode={darkMode} />;
+      case ViewState.RESET_PASSWORD:
+        return <ResetPassword setView={setCurrentView} darkMode={darkMode} />;
       case ViewState.HOME:
         return <Dashboard user={user} onViewChange={setCurrentView} darkMode={darkMode} />;
       case ViewState.TRANSFER:
@@ -158,7 +173,15 @@ export default function App() {
     }
   };
 
-  const isAuthView = [ViewState.SPLASH, ViewState.SIGN_IN, ViewState.SIGN_UP, ViewState.FORGOT_PASSWORD, ViewState.REVERIFY].includes(currentView);
+  const isAuthView = [
+    ViewState.SPLASH,
+    ViewState.SIGN_IN,
+    ViewState.SIGN_UP,
+    ViewState.FORGOT_PASSWORD,
+    ViewState.REVERIFY,
+    ViewState.VERIFY_EMAIL,
+    ViewState.RESET_PASSWORD,
+  ].includes(currentView);
 
   return (
     <ErrorBoundary>

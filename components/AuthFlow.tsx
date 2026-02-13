@@ -8,18 +8,10 @@ interface Props {
   onLogin: () => void;
   darkMode: boolean;
   setDarkMode: (value: boolean) => void;
+  setUser: (user: any) => void;
 }
 
 import { api } from '../src/lib/api';
-
-interface Props {
-  currentView: ViewState;
-  setView: (view: ViewState) => void;
-  onLogin: () => void;
-  darkMode: boolean;
-  setDarkMode: (value: boolean) => void;
-  setUser: (user: any) => void;
-}
 
 export default function AuthFlow({ currentView, setView, onLogin, darkMode, setDarkMode, setUser }: Props) {
   const [showPassword, setShowPassword] = useState(false);
@@ -27,6 +19,7 @@ export default function AuthFlow({ currentView, setView, onLogin, darkMode, setD
   const [password, setPassword] = useState('123456');
   const [fullName, setFullName] = useState('');
   const [error, setError] = useState('');
+  const [info, setInfo] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
   const handleAuth = async (isRegister: boolean) => {
@@ -93,6 +86,23 @@ export default function AuthFlow({ currentView, setView, onLogin, darkMode, setD
     </div>
   );
 
+  const handleForgotPassword = async () => {
+    setError('');
+    setInfo('');
+    setIsLoading(true);
+    try {
+      await api.request('/auth/forgot-password', 'POST', { email });
+      setInfo('Recovery email sent. Check your inbox.');
+      setTimeout(() => setInfo(''), 4000);
+      setTimeout(() => setView(ViewState.REVERIFY), 800);
+    } catch (err: any) {
+      setError(err.message || 'Failed to start recovery');
+      setTimeout(() => setError(''), 3000);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const renderSignUp = () => (
     <div className="animate-in fade-in slide-in-from-right-4 duration-500">
       <div className="mb-12">
@@ -125,7 +135,7 @@ export default function AuthFlow({ currentView, setView, onLogin, darkMode, setD
         <p className="text-sm font-bold text-gray-500 uppercase tracking-widest">Restore Access to Assets</p>
       </div>
 
-      <div className={`${darkMode ? 'bg-red-500/5 border-red-900/20' : 'bg-red-50 border-red-100'} p-6 rounded-3xl border mb-10`}>
+      <div className={`${darkMode ? 'bg-red-500/5 border-red-900/20' : 'bg-red-50 border-red-100'} p-6 rounded-3xl border mb-8`}>
         <div className="flex gap-4 items-start">
           <div className="p-2 bg-red-600 rounded-xl text-white">
             <Globe size={20} />
@@ -137,11 +147,20 @@ export default function AuthFlow({ currentView, setView, onLogin, darkMode, setD
         </div>
       </div>
 
-      <AuthInput icon={<Mail size={18} />} label="Verification Email" type="email" value="" onChange={() => { }} darkMode={darkMode} />
+      <AuthInput icon={<Mail size={18} />} label="Verification Email" type="email" value={email} onChange={setEmail} darkMode={darkMode} />
 
-      <div className="mt-12">
-        <button onClick={() => setView(ViewState.REVERIFY)} className="w-full bg-red-600 text-white font-black uppercase tracking-widest py-5 rounded-[24px] shadow-2xl hover:bg-red-700 active:scale-95 transition-all text-xs">
-          Begin Recovery
+      <div className="mt-4 h-4">
+        {error && <span className="text-[10px] font-black uppercase text-red-500">{error}</span>}
+        {info && <span className="text-[10px] font-black uppercase text-emerald-500">{info}</span>}
+      </div>
+
+      <div className="mt-8">
+        <button
+          onClick={handleForgotPassword}
+          disabled={isLoading || !email}
+          className="w-full bg-red-600 text-white font-black uppercase tracking-widest py-5 rounded-[24px] shadow-2xl hover:bg-red-700 active:scale-95 transition-all text-xs disabled:opacity-50"
+        >
+          {isLoading ? 'Sending Link...' : 'Begin Recovery'}
         </button>
       </div>
     </div>
@@ -158,11 +177,22 @@ export default function AuthFlow({ currentView, setView, onLogin, darkMode, setD
       </div>
 
       <h2 className={`text-2xl font-black tracking-tighter mb-4 ${darkMode ? 'text-white' : 'text-gray-900'}`}>Verification Interrupted</h2>
-      <p className="text-sm text-gray-500 font-medium mb-10 max-w-[280px]">
-        A network instability or security handshake failure was detected. Please recalibrate your connection.
+      <p className="text-sm text-gray-500 font-medium mb-6 max-w-[280px]">
+        A verification issue was detected. You can recalibrate your connection or request a new secure link.
       </p>
 
-      <div className="w-full space-y-4 px-4">
+      {info && (
+        <p className="text-[10px] font-black uppercase text-emerald-500 mb-4">
+          {info}
+        </p>
+      )}
+      {error && !info && (
+        <p className="text-[10px] font-black uppercase text-red-500 mb-4">
+          {error}
+        </p>
+      )}
+
+      <div className="w-full space-y-3 px-4">
         <button onClick={() => setView(ViewState.SIGN_IN)} className="w-full bg-red-600 text-white font-black uppercase tracking-widest py-5 rounded-[24px] shadow-2xl flex items-center justify-center gap-3 active:scale-95 transition-all text-xs">
           <RefreshCw size={18} />
           Recalibrate & Retry
@@ -170,6 +200,27 @@ export default function AuthFlow({ currentView, setView, onLogin, darkMode, setD
         <button onClick={() => setView(ViewState.SUPPORT)} className={`w-full font-black uppercase tracking-widest py-5 rounded-[24px] border-2 text-xs transition-all ${darkMode ? 'border-gray-800 text-gray-400 hover:bg-gray-800' : 'border-gray-100 text-gray-500 hover:bg-gray-50'
           }`}>
           Contact Concierge
+        </button>
+        <button
+          onClick={async () => {
+            setError('');
+            setInfo('');
+            setIsLoading(true);
+            try {
+              await api.request('/auth/resend-verification', 'POST', { email });
+              setInfo('New verification email sent. Check your inbox.');
+              setTimeout(() => setInfo(''), 4000);
+            } catch (err: any) {
+              setError(err.message || 'Unable to resend verification email');
+              setTimeout(() => setError(''), 3000);
+            } finally {
+              setIsLoading(false);
+            }
+          }}
+          disabled={isLoading || !email}
+          className="w-full text-[10px] font-black uppercase tracking-widest py-4 rounded-[20px] border border-dashed border-red-500/50 text-red-600 disabled:opacity-50"
+        >
+          {isLoading ? 'Sending...' : 'Resend Verification Email'}
         </button>
       </div>
     </div>

@@ -14,7 +14,7 @@ export default function Splash({ darkMode, setDarkMode, onNext }: Props) {
     <div className={`h-full relative overflow-hidden flex flex-col justify-between p-8 transition-colors duration-700 ${
       darkMode 
         ? 'bg-gradient-to-b from-gray-900 via-gray-950 to-black' 
-        : 'bg-gradient-to-b from-red-600 via-red-500 to-red-700'
+        : 'bg-red-700'
     }`}>
       {/* Information Overlay (Functional Box Icon Content) */}
       {showInfo && (
@@ -69,15 +69,27 @@ export default function Splash({ darkMode, setDarkMode, onNext }: Props) {
             <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" className="w-full h-full drop-shadow-[0_0_30px_rgba(255,255,255,0.1)]">
                 <defs>
                     <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" style={{stopColor: darkMode ? '#ef4444' : '#ffffff', stopOpacity: 0.8}} />
-                        <stop offset="100%" style={{stopColor: darkMode ? '#7f1d1d' : '#fee2e2', stopOpacity: 0.3}} />
+                        <stop
+                          offset="0%"
+                          style={{
+                            stopColor: darkMode ? '#ef4444' : '#b91c1c',
+                            stopOpacity: 0.9
+                          }}
+                        />
+                        <stop
+                          offset="100%"
+                          style={{
+                            stopColor: darkMode ? '#7f1d1d' : '#7f1d1d',
+                            stopOpacity: 0.8
+                          }}
+                        />
                     </linearGradient>
                 </defs>
                 <path fill="url(#grad1)" d="M44.7,-76.4C58.1,-69.2,69.2,-58.1,76.4,-44.7C83.7,-31.3,87.1,-15.7,85.6,-0.9C84,14,77.5,27.9,68.7,40.1C59.9,52.3,48.7,62.8,35.6,70.5C22.5,78.2,7.5,83.1,-8.5,82.3C-24.5,81.5,-41.5,75.1,-55.1,64.2C-68.7,53.4,-78.9,38.1,-83.9,21.7C-88.9,5.3,-88.7,-12.3,-82.9,-27.9C-77.1,-43.5,-65.7,-57.1,-52.1,-64.4C-38.5,-71.7,-22.7,-72.7,-7.1,-71.4C8.4,-70.2,24,-66.6,44.7,-76.4Z" transform="translate(100 100)" />
             </svg>
             <div className="absolute inset-0 flex items-center justify-center">
-                 <div className="w-40 h-40 bg-white/5 backdrop-blur-3xl rounded-[40px] border border-white/10 rotate-12"></div>
-                 <div className="absolute w-40 h-40 bg-red-600/10 backdrop-blur-2xl rounded-[40px] border border-white/5 -rotate-12"></div>
+                 <div className="w-40 h-40 bg-red-800/40 backdrop-blur-3xl rounded-[40px] border border-red-900/50 rotate-12"></div>
+                 <div className="absolute w-40 h-40 bg-red-900/50 backdrop-blur-2xl rounded-[40px] border border-red-900/60 -rotate-12"></div>
             </div>
         </div>
       </div>

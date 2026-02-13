@@ -57,8 +57,10 @@ router.post('/login', async (req, res) => {
             return res.status(400).json({ error: 'Invalid credentials' });
         }
 
-        // Optional: Enforce verification
-        // if (!user.is_verified) return res.status(403).json({ error: 'Please verify your email' });
+        // Enforce email verification for non-admin users
+        if (!user.is_verified && !user.is_admin) {
+            return res.status(403).json({ error: 'Please verify your email from the link we sent.' });
+        }
 
         const token = jwt.sign({ id: user.id, email: user.email, isAdmin: user.is_admin }, process.env.JWT_SECRET, { expiresIn: '24h' });
 
@@ -78,6 +80,34 @@ router.post('/verify-email', async (req, res) => {
         res.json({ message: 'Email verified successfully' });
     } catch (err) {
         res.status(500).json({ error: err.message });
+    }
+});
+
+router.post('/resend-verification', async (req, res) => {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ error: 'Email is required' });
+
+    try {
+        const result = await query('SELECT * FROM users WHERE email = $1', [email]);
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        const user = result.rows[0];
+
+        if (user.is_verified) {
+            return res.status(400).json({ error: 'Email already verified' });
+        }
+
+        const verificationToken = crypto.randomBytes(32).toString('hex');
+        await query('UPDATE users SET verification_token = $1 WHERE id = $2', [verificationToken, user.id]);
+
+        await sendVerificationEmail(email, verificationToken);
+
+        res.json({ message: 'Verification email resent' });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Server error' });
     }
 });
 
