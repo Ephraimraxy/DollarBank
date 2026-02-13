@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "start": "node server/index.js",
+    "start": "node server/initDb.js && node server/seed.js && node server/index.js",
     "db:init": "node server/initDb.js",
     "db:seed": "node server/seed.js"
   },
