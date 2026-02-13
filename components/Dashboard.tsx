@@ -18,7 +18,12 @@ export default function Dashboard({ user, onViewChange, darkMode }: Props) {
     const fetchData = async () => {
       try {
         const data = await api.getAccounts();
-        setAccounts(data);
+        if (Array.isArray(data)) {
+          setAccounts(data);
+        } else {
+          console.error('API returned non-array for accounts:', data);
+          setAccounts([]);
+        }
       } catch (err) {
         console.error('Failed to fetch accounts', err);
       } finally {
@@ -28,7 +33,7 @@ export default function Dashboard({ user, onViewChange, darkMode }: Props) {
     fetchData();
   }, []);
 
-  const totalBalance = accounts.reduce((sum, acc) => sum + parseFloat(acc.balance), 0);
+  const totalBalance = Array.isArray(accounts) ? accounts.reduce((sum, acc) => sum + (parseFloat(acc?.balance) || 0), 0) : 0;
   const formattedTotal = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(totalBalance);
 
   if (isLoading) {

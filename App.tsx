@@ -14,6 +14,7 @@ import AiAssistant from './components/AiAssistant';
 import Splash from './components/Splash';
 import AuthFlow from './components/AuthFlow';
 import { ViewState } from './types';
+import { ErrorBoundary } from './components/ErrorBoundary';
 
 export default function App() {
   const [currentView, setCurrentView] = useState<ViewState>(() => {
@@ -69,8 +70,8 @@ export default function App() {
             vault_<span className="text-red-600">id</span>
           </h1>
           <div className={`px-1.5 py-0.5 rounded border text-[7px] font-black uppercase tracking-widest ${darkMode
-              ? 'bg-red-500/10 border-red-500/30 text-red-500'
-              : 'bg-red-50 border-red-200 text-red-700'
+            ? 'bg-red-500/10 border-red-500/30 text-red-500'
+            : 'bg-red-50 border-red-200 text-red-700'
             }`}>
             Secure
           </div>
@@ -160,28 +161,30 @@ export default function App() {
   const isAuthView = [ViewState.SPLASH, ViewState.SIGN_IN, ViewState.SIGN_UP, ViewState.FORGOT_PASSWORD, ViewState.REVERIFY].includes(currentView);
 
   return (
-    <div className={`max-w-md mx-auto h-[100dvh] flex flex-col overflow-hidden shadow-2xl relative transition-colors duration-300 ${darkMode ? 'bg-gray-950' : 'bg-gray-50'}`}>
-      {!isAuthView && <Header />}
+    <ErrorBoundary>
+      <div className={`max-w-md mx-auto h-[100dvh] flex flex-col overflow-hidden shadow-2xl relative transition-colors duration-300 ${darkMode ? 'bg-gray-950' : 'bg-gray-50'}`}>
+        {!isAuthView && <Header />}
 
-      <main className="flex-1 overflow-y-auto no-scrollbar pb-20">
-        {renderContent()}
-      </main>
+        <main className="flex-1 overflow-y-auto no-scrollbar pb-20">
+          {renderContent()}
+        </main>
 
-      {!isAuthView && <AiAssistant user={user} darkMode={darkMode} />}
+        {!isAuthView && <AiAssistant user={user} darkMode={darkMode} />}
 
-      {!isAuthView && (
-        <div className={`border-t flex justify-around items-stretch px-2 fixed bottom-0 w-full max-w-md z-50 transition-all duration-500 h-[72px] ${darkMode
+        {!isAuthView && (
+          <div className={`border-t flex justify-around items-stretch px-2 fixed bottom-0 w-full max-w-md z-50 transition-all duration-500 h-[72px] ${darkMode
             ? 'bg-gray-950/90 border-gray-800 backdrop-blur-xl shadow-[0_-10px_30px_rgba(0,0,0,0.5)]'
             : 'bg-white/90 border-gray-100 backdrop-blur-xl shadow-[0_-10px_30px_rgba(0,0,0,0.05)]'
-          }`}>
-          <NavButton icon={<Home size={20} />} label="Home" isActive={currentView === ViewState.HOME} onClick={() => setCurrentView(ViewState.HOME)} darkMode={darkMode} />
-          <NavButton icon={<ArrowRightLeft size={20} />} label="Transfer" isActive={currentView === ViewState.TRANSFER} onClick={() => setCurrentView(ViewState.TRANSFER)} darkMode={darkMode} />
-          <NavButton icon={<CreditCard size={20} />} label="Cards" isActive={currentView === ViewState.CARDS} onClick={() => setCurrentView(ViewState.CARDS)} darkMode={darkMode} />
-          <NavButton icon={<TrendingUp size={20} />} label="Invest" isActive={currentView === ViewState.INVEST} onClick={() => setCurrentView(ViewState.INVEST)} darkMode={darkMode} />
-          <NavButton icon={<FileText size={20} />} label="Activity" isActive={currentView === ViewState.ACTIVITY} onClick={() => setCurrentView(ViewState.ACTIVITY)} darkMode={darkMode} />
-        </div>
-      )}
-    </div>
+            }`}>
+            <NavButton icon={<Home size={20} />} label="Home" isActive={currentView === ViewState.HOME} onClick={() => setCurrentView(ViewState.HOME)} darkMode={darkMode} />
+            <NavButton icon={<ArrowRightLeft size={20} />} label="Transfer" isActive={currentView === ViewState.TRANSFER} onClick={() => setCurrentView(ViewState.TRANSFER)} darkMode={darkMode} />
+            <NavButton icon={<CreditCard size={20} />} label="Cards" isActive={currentView === ViewState.CARDS} onClick={() => setCurrentView(ViewState.CARDS)} darkMode={darkMode} />
+            <NavButton icon={<TrendingUp size={20} />} label="Invest" isActive={currentView === ViewState.INVEST} onClick={() => setCurrentView(ViewState.INVEST)} darkMode={darkMode} />
+            <NavButton icon={<FileText size={20} />} label="Activity" isActive={currentView === ViewState.ACTIVITY} onClick={() => setCurrentView(ViewState.ACTIVITY)} darkMode={darkMode} />
+          </div>
+        )}
+      </div>
+    </ErrorBoundary>
   );
 }
 
