@@ -1,45 +1,132 @@
 import express from 'express';
 import cors from 'cors';
+import compression from 'compression';
+import morgan from 'morgan';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import dotenv from 'dotenv';
+import { config } from './config/index.js';
+import logger from './utils/logger.js';
+import { errorHandler } from './utils/errors.js';
 import { query } from './db.js';
+import { runMigrations } from './utils/migrations.js';
 import authRoutes from './routes/auth.js';
 import chatRoutes from './routes/chat.js';
 import transactionRoutes from './routes/transactions.js';
 import accountsRoutes from './routes/accounts.js';
 
-dotenv.config();
+// Security middleware
+import {
+    securityHeaders,
+    enforceHttps,
+    apiLimiter,
+    sanitizeInput,
+    requestSizeLimit,
+} from './middleware/security.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-const PORT = process.env.PORT || 3000;
 
-app.use(cors());
-app.use(express.json());
+// Trust proxy (for rate limiting behind reverse proxy)
+app.set('trust proxy', 1);
 
-// API Routes
-app.use('/api/auth', authRoutes);
-app.use('/api/chat', chatRoutes);
-app.use('/api/transactions', transactionRoutes);
-app.use('/api/accounts', accountsRoutes);
+// Security middleware (must be first)
+app.use(securityHeaders);
+app.use(enforceHttps);
 
-app.get('/api/health', (req, res) => {
-    res.json({ status: 'ok', timestamp: new Date().toISOString() });
+// Compression
+app.use(compression());
+
+// Request logging
+app.use(morgan('combined', {
+    stream: {
+        write: (message) => logger.info(message.trim()),
+    },
+}));
+
+// CORS configuration
+app.use(cors({
+    origin: (origin, callback) => {
+        // Allow requests with no origin (mobile apps, Postman, etc.)
+        if (!origin) return callback(null, true);
+        
+        // In development, allow all origins
+        if (config.isDevelopment) {
+            return callback(null, true);
+        }
+        
+        // In production, check allowed origins
+        if (config.allowedOrigins.length === 0) {
+            logger.warn('⚠️  WARNING: ALLOWED_ORIGINS not set in production. Allowing all origins.');
+            return callback(null, true);
+        }
+        
+        if (config.allowedOrigins.includes(origin)) {
+            callback(null, true);
+        } else {
+            logger.warn(`CORS blocked origin: ${origin}`);
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
+    credentials: true,
+    optionsSuccessStatus: 200,
+}));
+
+// Body parsing with size limits
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use(requestSizeLimit('10mb'));
+
+// Input sanitization
+app.use(sanitizeInput);
+
+// Health check endpoints (before rate limiting)
+app.get('/api/health', async (req, res) => {
+    try {
+        // Check database connection
+        await query('SELECT NOW()');
+        res.json({
+            status: 'healthy',
+            timestamp: new Date().toISOString(),
+            uptime: process.uptime(),
+            environment: config.nodeEnv,
+        });
+    } catch (err) {
+        logger.error('Health check failed:', err);
+        res.status(503).json({
+            status: 'unhealthy',
+            timestamp: new Date().toISOString(),
+            error: 'Database connection failed',
+        });
+    }
 });
 
-// Database Test Route
-app.get('/api/db-test', async (req, res) => {
+app.get('/api/ready', async (req, res) => {
+    try {
+        await query('SELECT 1');
+        res.json({ status: 'ready' });
+    } catch (err) {
+        res.status(503).json({ status: 'not ready', error: err.message });
+    }
+});
+
+// Database test route (protected by rate limiting)
+app.get('/api/db-test', apiLimiter, async (req, res, next) => {
     try {
         const result = await query('SELECT NOW()');
         res.json({ status: 'connected', time: result.rows[0].now });
     } catch (err) {
-        console.error(err);
-        res.status(500).json({ status: 'error', message: err.message });
+        next(err);
     }
 });
+
+// API Routes with rate limiting
+app.use('/api', apiLimiter);
+app.use('/api/auth', authRoutes);
+app.use('/api/chat', chatRoutes);
+app.use('/api/transactions', transactionRoutes);
+app.use('/api/accounts', accountsRoutes);
 
 // Serve static files from the React app
 app.use(express.static(path.join(__dirname, '../dist')));
@@ -50,12 +137,41 @@ app.get(/.*/, (req, res) => {
     res.sendFile(path.join(__dirname, '../dist/index.html'));
 });
 
-// Global Error Handler
-app.use((err, req, res, next) => {
-    console.error(err.stack);
-    res.status(500).json({ error: 'Something went wrong!' });
+// Global Error Handler (must be last)
+app.use(errorHandler);
+
+// Initialize database and start server
+async function startServer() {
+    try {
+        // Run migrations on startup (only runs pending migrations)
+        if (config.isProduction || process.env.RUN_MIGRATIONS === 'true') {
+            logger.info('Running database migrations...');
+            await runMigrations();
+        }
+
+        // Start server
+        app.listen(config.port, '0.0.0.0', () => {
+            logger.info(`🚀 Server is running on port ${config.port}`);
+            logger.info(`📝 Environment: ${config.nodeEnv}`);
+            logger.info(`🔒 HTTPS enforcement: ${config.enforceHttps}`);
+            logger.info(`🌐 Allowed origins: ${config.allowedOrigins.join(', ')}`);
+            logger.info(`🌍 Listening on 0.0.0.0:${config.port} (Railway compatible)`);
+        });
+    } catch (error) {
+        logger.error('Failed to start server:', error);
+        process.exit(1);
+    }
+}
+
+startServer();
+
+// Graceful shutdown
+process.on('SIGTERM', () => {
+    logger.info('SIGTERM signal received: closing HTTP server');
+    process.exit(0);
 });
 
-app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
+process.on('SIGINT', () => {
+    logger.info('SIGINT signal received: closing HTTP server');
+    process.exit(0);
 });

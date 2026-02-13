@@ -51,7 +51,9 @@ export const config = {
     enforceHttps: process.env.ENFORCE_HTTPS === 'true',
     allowedOrigins: process.env.ALLOWED_ORIGINS 
         ? process.env.ALLOWED_ORIGINS.split(',').map(origin => origin.trim())
-        : ['http://localhost:3000', 'http://localhost:5173'],
+        : process.env.NODE_ENV === 'production'
+            ? [] // Must be set in production
+            : ['http://localhost:3000', 'http://localhost:5173'],
 
     // Rate Limiting
     rateLimitWindowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || '900000', 10), // 15 minutes

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { ViewState } from '../types';
-import { Mail, Lock, User, ArrowLeft, ShieldCheck, RefreshCw, AlertTriangle, Eye, EyeOff, Globe, ChevronRight, Sun, Moon } from 'lucide-react';
+import { Lock, User, ArrowLeft, ShieldCheck, RefreshCw, AlertTriangle, Eye, EyeOff, ChevronRight, Mail, Globe, Sun, Moon } from 'lucide-react';
 
 interface Props {
   currentView: ViewState;

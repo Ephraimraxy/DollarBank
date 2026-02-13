@@ -1,22 +1,34 @@
 import express from 'express';
 import { GoogleGenAI } from '@google/genai';
 import { authenticateToken } from '../middleware/auth.js';
+import { asyncHandler } from '../utils/errors.js';
+import { config } from '../config/index.js';
+import logger from '../utils/logger.js';
 
 const router = express.Router();
 
-router.post('/stream', authenticateToken, async (req, res) => {
+router.post('/stream', authenticateToken, asyncHandler(async (req, res) => {
     const { messages } = req.body;
 
-    if (!process.env.GOOGLE_API_KEY) {
+    if (!config.googleApiKey) {
+        logger.error('AI service misconfigured: Missing GOOGLE_API_KEY');
         return res.status(500).json({ error: 'AI Service Misconfigured' });
     }
 
+    if (!Array.isArray(messages) || messages.length === 0) {
+        return res.status(400).json({ error: 'Messages array is required' });
+    }
+
     try {
-        const ai = new GoogleGenAI({ apiKey: process.env.GOOGLE_API_KEY });
+        const ai = new GoogleGenAI({ apiKey: config.googleApiKey });
         
-        // Use free-tier compatible models (gemini-1.5-flash or gemini-pro)
-        // Try gemini-1.5-flash first (faster, free tier), fallback to gemini-pro
-        const models = ['gemini-1.5-flash', 'gemini-pro'];
+        // Use free-tier compatible models (no billing required)
+        // Priority: newest/fastest first, fallback to older models
+        const models = [
+            'gemini-2.5-flash-lite',  // Newest, optimized for lowest latency
+            'gemini-1.5-flash-8b',     // Extremely lightweight, very fast
+            'gemini-1.5-flash'         // Reliable fallback
+        ];
         let lastError = null;
 
         for (const model of models) {
@@ -36,7 +48,7 @@ router.post('/stream', authenticateToken, async (req, res) => {
                 lastError = modelErr;
                 // If it's a quota/rate limit error, try next model
                 if (modelErr.status === 429 || modelErr.message?.includes('quota')) {
-                    console.log(`Model ${model} quota exceeded, trying next...`);
+                    logger.warn(`Model ${model} quota exceeded, trying next...`);
                     continue;
                 }
                 // For other errors, break and return error
@@ -46,7 +58,7 @@ router.post('/stream', authenticateToken, async (req, res) => {
 
         // If all models failed, return appropriate error
         if (lastError?.status === 429) {
-            console.error('AI Quota Error:', lastError.message);
+            logger.error('AI Quota Error:', lastError.message);
             return res.status(503).json({ 
                 error: 'AI concierge is temporarily unavailable due to high demand. Please try again in a moment.' 
             });
@@ -54,7 +66,7 @@ router.post('/stream', authenticateToken, async (req, res) => {
 
         throw lastError || new Error('All models failed');
     } catch (err) {
-        console.error('AI Error:', err);
+        logger.error('AI Error:', err);
         
         // Provide user-friendly error messages
         if (err.status === 429 || err.message?.includes('quota')) {
@@ -71,6 +83,6 @@ router.post('/stream', authenticateToken, async (req, res) => {
 
         res.status(500).json({ error: 'AI Service Unavailable' });
     }
-});
+}));
 
 export default router;
