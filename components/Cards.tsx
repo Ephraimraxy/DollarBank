@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Lock, Unlock, Eye, Settings, ShieldAlert, Smartphone, Wifi, ShoppingBag, ChevronRight, Cpu } from 'lucide-react';
+import { ChevronRight, Cpu, Eye, Lock, Settings, ShieldAlert, ShoppingBag, Smartphone, Unlock, Wifi } from 'lucide-react';
 
 interface Props {
   darkMode: boolean;
@@ -42,16 +42,16 @@ export default function Cards({ darkMode }: Props) {
         <div className={`relative w-full aspect-[1.586/1] max-w-sm rounded-[32px] shadow-2xl overflow-hidden transition-all duration-700 transform ${isLocked ? 'grayscale opacity-80 scale-95' : 'hover:scale-105'}`}>
           {/* Card Background */}
           <div className="absolute inset-0 bg-gradient-to-br from-red-800 via-red-600 to-red-950"></div>
-          
+
           {/* Glimmer */}
           {!isLocked && <div className="card-glimmer"></div>}
 
           {/* Decorative SVG Pattern */}
           <div className="absolute inset-0 opacity-10">
-             <svg width="100%" height="100%" viewBox="0 0 100 100">
-               <circle cx="50" cy="50" r="40" stroke="white" strokeWidth="0.5" fill="none" />
-               <circle cx="50" cy="50" r="30" stroke="white" strokeWidth="0.5" fill="none" />
-             </svg>
+            <svg width="100%" height="100%" viewBox="0 0 100 100">
+              <circle cx="50" cy="50" r="40" stroke="white" strokeWidth="0.5" fill="none" />
+              <circle cx="50" cy="50" r="30" stroke="white" strokeWidth="0.5" fill="none" />
+            </svg>
           </div>
 
           <div className="relative h-full p-8 flex flex-col justify-between text-white">
@@ -64,10 +64,10 @@ export default function Cards({ darkMode }: Props) {
             </div>
 
             <div className="flex items-center justify-between mb-4">
-               <div className="w-12 h-9 bg-gradient-to-br from-amber-400 to-amber-600 rounded-lg shadow-inner flex items-center justify-center">
-                  <Cpu size={24} className="text-amber-900/50" />
-               </div>
-               <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2a/Mastercard-logo.svg/1280px-Mastercard-logo.svg.png" className="h-8 opacity-80" alt="Mastercard" />
+              <div className="w-12 h-9 bg-gradient-to-br from-amber-400 to-amber-600 rounded-lg shadow-inner flex items-center justify-center">
+                <Cpu size={24} className="text-amber-900/50" />
+              </div>
+              <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2a/Mastercard-logo.svg/1280px-Mastercard-logo.svg.png" className="h-8 opacity-80" alt="Mastercard" />
             </div>
 
             <div>
@@ -80,12 +80,12 @@ export default function Cards({ darkMode }: Props) {
               </div>
             </div>
           </div>
-          
+
           {isLocked && (
-             <div className="absolute inset-0 bg-black/60 backdrop-blur-md flex flex-col items-center justify-center text-white z-20 animate-in fade-in duration-300">
-                 <Lock size={40} className="mb-2 animate-bounce" />
-                 <span className="font-black tracking-[0.3em] text-[10px] uppercase">Asset Frozen</span>
-             </div>
+            <div className="absolute inset-0 bg-black/60 backdrop-blur-md flex flex-col items-center justify-center text-white z-20 animate-in fade-in duration-300">
+              <Lock size={40} className="mb-2 animate-bounce" />
+              <span className="font-black tracking-[0.3em] text-[10px] uppercase">Asset Frozen</span>
+            </div>
           )}
         </div>
       </div>
@@ -93,9 +93,9 @@ export default function Cards({ darkMode }: Props) {
       {/* Control Actions */}
       <div className="px-4 mb-8">
         <div className="grid grid-cols-3 gap-3">
-            <CardAction icon={isLocked ? <Unlock size={20} /> : <Lock size={20} />} label={isLocked ? 'Unfreeze' : 'Freeze'} isActive={isLocked} onClick={() => setIsLocked(!isLocked)} darkMode={darkMode} />
-            <CardAction icon={<Eye size={20} />} label="Numbers" onClick={() => setShowCardNumber(!showCardNumber)} darkMode={darkMode} />
-            <CardAction icon={<Settings size={20} />} label="Limits" onClick={() => {}} darkMode={darkMode} />
+          <CardAction icon={isLocked ? <Unlock size={20} /> : <Lock size={20} />} label={isLocked ? 'Unfreeze' : 'Freeze'} isActive={isLocked} onClick={() => setIsLocked(!isLocked)} darkMode={darkMode} />
+          <CardAction icon={<Eye size={20} />} label="Numbers" onClick={() => setShowCardNumber(!showCardNumber)} darkMode={darkMode} />
+          <CardAction icon={<Settings size={20} />} label="Limits" onClick={() => { }} darkMode={darkMode} />
         </div>
       </div>
 
@@ -103,9 +103,9 @@ export default function Cards({ darkMode }: Props) {
       <div className="px-4">
         <h3 className="text-[10px] font-black uppercase tracking-[0.2em] mb-4 px-2 text-gray-500">Security Suite</h3>
         <div className={`${darkMode ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-100'} rounded-[32px] shadow-sm border overflow-hidden`}>
-            <SettingItem icon={<ShoppingBag size={18} />} label="Online Purchases" active={true} darkMode={darkMode} />
-            <SettingItem icon={<Smartphone size={18} />} label="Contactless Pay" active={true} darkMode={darkMode} />
-            <SettingItem icon={<ShieldAlert size={18} />} label="Global Coverage" active={false} darkMode={darkMode} />
+          <SettingItem icon={<ShoppingBag size={18} />} label="Online Purchases" active={true} darkMode={darkMode} />
+          <SettingItem icon={<Smartphone size={18} />} label="Contactless Pay" active={true} darkMode={darkMode} />
+          <SettingItem icon={<ShieldAlert size={18} />} label="Global Coverage" active={false} darkMode={darkMode} />
         </div>
       </div>
     </div>
