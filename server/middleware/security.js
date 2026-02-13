@@ -63,22 +63,12 @@ export const passwordResetLimiter = createRateLimiter(
     'Too many password reset attempts, please try again later'
 );
 
-// Input sanitization (simple sanitizer for Express 5 compatibility)
+// Input sanitization (Express 5 compatible - doesn't modify read-only properties)
 export const sanitizeInput = (req, res, next) => {
-    // Simple sanitization - remove dangerous characters from query params
-    if (req.query) {
-        const sanitize = (obj) => {
-            for (const key in obj) {
-                if (typeof obj[key] === 'string') {
-                    // Remove MongoDB operators and other dangerous patterns
-                    obj[key] = obj[key].replace(/\$|\./g, '');
-                } else if (typeof obj[key] === 'object' && obj[key] !== null) {
-                    sanitize(obj[key]);
-                }
-            }
-        };
-        sanitize(req.query);
-    }
+    // Express 5 makes req.query read-only, so we can't sanitize it directly
+    // express-validator already handles input validation, so this is just a pass-through
+    // For PostgreSQL, we don't need MongoDB-specific sanitization
+    // SQL injection is prevented by using parameterized queries (which we do)
     next();
 };
 
