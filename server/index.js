@@ -129,11 +129,21 @@ app.use('/api/transactions', transactionRoutes);
 app.use('/api/accounts', accountsRoutes);
 
 // Serve static files from the React app
-app.use(express.static(path.join(__dirname, '../dist')));
+app.use(express.static(path.join(__dirname, '../dist'), {
+    // Don't serve index.html for static file requests
+    index: false,
+}));
+
+// Handle missing CSS file gracefully
+app.get('/index.css', (req, res) => {
+    res.type('text/css');
+    res.send('/* CSS file not found - styles are inline or in JS bundle */');
+});
 
 // The "catchall" handler: for any request that doesn't
 // match one above, send back React's index.html file.
-app.get(/.*/, (req, res) => {
+// Only catch non-API, non-static file routes
+app.get(/^(?!\/api|\/assets|\/index\.css).*/, (req, res) => {
     res.sendFile(path.join(__dirname, '../dist/index.html'));
 });
 

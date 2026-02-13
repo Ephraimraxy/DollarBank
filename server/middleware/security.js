@@ -7,9 +7,26 @@ export const securityHeaders = helmet({
     contentSecurityPolicy: {
         directives: {
             defaultSrc: ["'self'"],
-            styleSrc: ["'self'", "'unsafe-inline'"],
-            scriptSrc: ["'self'"],
+            styleSrc: [
+                "'self'",
+                "'unsafe-inline'",
+                "https://fonts.googleapis.com",
+            ],
+            scriptSrc: [
+                "'self'",
+                "'unsafe-inline'",
+                "https://cdn.tailwindcss.com",
+                "https://esm.sh",
+            ],
+            fontSrc: [
+                "'self'",
+                "https://fonts.gstatic.com",
+            ],
             imgSrc: ["'self'", "data:", "https:"],
+            connectSrc: [
+                "'self'",
+                "https://esm.sh",
+            ],
         },
     },
     crossOriginEmbedderPolicy: false, // Allow embedding for development
