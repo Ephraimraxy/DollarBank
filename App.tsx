@@ -33,6 +33,14 @@ export default function App() {
     return isAuth ? ViewState.HOME : ViewState.SPLASH;
   });
 
+  useEffect(() => {
+    const handleNavigateToSignup = () => {
+      setCurrentView(ViewState.SIGN_UP);
+    };
+    window.addEventListener('navigate-to-signup', handleNavigateToSignup);
+    return () => window.removeEventListener('navigate-to-signup', handleNavigateToSignup);
+  }, []);
+
   const [user, setUser] = useState(() => {
     const saved = localStorage.getItem('vault-id-user-identity');
     return saved ? JSON.parse(saved) : {
@@ -74,13 +82,13 @@ export default function App() {
   };
 
   const Header = () => (
-    <div className={`${darkMode ? 'bg-gray-950 border-gray-900' : 'bg-white border-gray-100'} px-4 py-4 flex justify-between items-center shadow-sm sticky top-0 z-40 border-b transition-colors duration-300`}>
+    <div className={`${darkMode ? 'bg-gray-950 border-gray-900' : 'bg-white border-gray-100'} px-3 py-2.5 flex justify-between items-center shadow-sm sticky top-0 z-40 border-b transition-colors duration-300`}>
       <div className="flex flex-col">
-        <div className="flex items-center gap-2">
-          <h1 className={`text-sm font-black tracking-[0.3em] uppercase leading-none ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+        <div className="flex items-center gap-1.5">
+          <h1 className={`text-xs font-black tracking-[0.3em] uppercase leading-none ${darkMode ? 'text-white' : 'text-gray-900'}`}>
             vault_<span className="text-red-600">id</span>
           </h1>
-          <div className={`px-1.5 py-0.5 rounded border text-[7px] font-black uppercase tracking-widest ${darkMode
+          <div className={`px-1 py-0.5 rounded border text-[6px] font-black uppercase tracking-widest ${darkMode
             ? 'bg-red-500/10 border-red-500/30 text-red-500'
             : 'bg-red-50 border-red-200 text-red-700'
             }`}>
@@ -92,22 +100,22 @@ export default function App() {
       <div className="flex items-center space-x-1">
         <button
           onClick={() => setCurrentView(ViewState.NOTIFICATIONS)}
-          className={`relative p-2 rounded-xl transition-all active:scale-90 ${darkMode ? 'hover:bg-gray-800' : 'hover:bg-gray-100'}`}
+          className={`relative p-1.5 rounded-lg transition-all active:scale-90 ${darkMode ? 'hover:bg-gray-800' : 'hover:bg-gray-100'}`}
         >
-          <Bell className={`w-5 h-5 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`} />
-          <span className="absolute top-2 right-2 bg-red-600 text-white text-[9px] font-black px-1 py-0.5 rounded-full border-2 border-white leading-none">2</span>
+          <Bell className={`w-4 h-4 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`} />
+          <span className="absolute top-1 right-1 bg-red-600 text-white text-[8px] font-black px-0.5 py-0 rounded-full border border-white leading-none">2</span>
         </button>
 
         <button
           onClick={() => setCurrentView(ViewState.PROFILE)}
-          className="active:scale-95 transition-transform ml-1 p-0.5"
+          className="active:scale-95 transition-transform ml-0.5 p-0.5"
         >
           <div className="relative group">
-            <div className="absolute -inset-1 bg-gradient-to-r from-red-600 to-amber-500 rounded-full opacity-20 group-hover:opacity-40 transition-opacity blur-sm"></div>
+            <div className="absolute -inset-0.5 bg-gradient-to-r from-red-600 to-amber-500 rounded-full opacity-20 group-hover:opacity-40 transition-opacity blur-sm"></div>
             <img
               src="https://picsum.photos/100/100"
               alt="Profile"
-              className={`relative w-9 h-9 rounded-full border-2 object-cover shadow-sm ${darkMode ? 'border-gray-800' : 'border-white'}`}
+              className={`relative w-7 h-7 rounded-full border-2 object-cover shadow-sm ${darkMode ? 'border-gray-800' : 'border-white'}`}
             />
           </div>
         </button>
@@ -188,22 +196,22 @@ export default function App() {
       <div className={`max-w-md mx-auto h-[100dvh] flex flex-col overflow-hidden shadow-2xl relative transition-colors duration-300 ${darkMode ? 'bg-gray-950' : 'bg-gray-50'}`}>
         {!isAuthView && <Header />}
 
-        <main className="flex-1 overflow-y-auto no-scrollbar pb-20">
+        <main className="flex-1 overflow-y-auto no-scrollbar pb-16">
           {renderContent()}
         </main>
 
         {!isAuthView && <AiAssistant user={user} darkMode={darkMode} />}
 
         {!isAuthView && (
-          <div className={`border-t flex justify-around items-stretch px-2 fixed bottom-0 w-full max-w-md z-50 transition-all duration-500 h-[72px] ${darkMode
+          <div className={`border-t flex justify-around items-stretch px-1 fixed bottom-0 w-full max-w-md z-50 transition-all duration-500 h-[60px] ${darkMode
             ? 'bg-gray-950/90 border-gray-800 backdrop-blur-xl shadow-[0_-10px_30px_rgba(0,0,0,0.5)]'
             : 'bg-white/90 border-gray-100 backdrop-blur-xl shadow-[0_-10px_30px_rgba(0,0,0,0.05)]'
             }`}>
-            <NavButton icon={<Home size={20} />} label="Home" isActive={currentView === ViewState.HOME} onClick={() => setCurrentView(ViewState.HOME)} darkMode={darkMode} />
-            <NavButton icon={<ArrowRightLeft size={20} />} label="Transfer" isActive={currentView === ViewState.TRANSFER} onClick={() => setCurrentView(ViewState.TRANSFER)} darkMode={darkMode} />
-            <NavButton icon={<CreditCard size={20} />} label="Cards" isActive={currentView === ViewState.CARDS} onClick={() => setCurrentView(ViewState.CARDS)} darkMode={darkMode} />
-            <NavButton icon={<TrendingUp size={20} />} label="Invest" isActive={currentView === ViewState.INVEST} onClick={() => setCurrentView(ViewState.INVEST)} darkMode={darkMode} />
-            <NavButton icon={<FileText size={20} />} label="Activity" isActive={currentView === ViewState.ACTIVITY} onClick={() => setCurrentView(ViewState.ACTIVITY)} darkMode={darkMode} />
+            <NavButton icon={<Home size={18} />} label="Home" isActive={currentView === ViewState.HOME} onClick={() => setCurrentView(ViewState.HOME)} darkMode={darkMode} />
+            <NavButton icon={<ArrowRightLeft size={18} />} label="Transfer" isActive={currentView === ViewState.TRANSFER} onClick={() => setCurrentView(ViewState.TRANSFER)} darkMode={darkMode} />
+            <NavButton icon={<CreditCard size={18} />} label="Cards" isActive={currentView === ViewState.CARDS} onClick={() => setCurrentView(ViewState.CARDS)} darkMode={darkMode} />
+            <NavButton icon={<TrendingUp size={18} />} label="Invest" isActive={currentView === ViewState.INVEST} onClick={() => setCurrentView(ViewState.INVEST)} darkMode={darkMode} />
+            <NavButton icon={<FileText size={18} />} label="Activity" isActive={currentView === ViewState.ACTIVITY} onClick={() => setCurrentView(ViewState.ACTIVITY)} darkMode={darkMode} />
           </div>
         )}
       </div>
@@ -213,15 +221,15 @@ export default function App() {
 
 const NavButton = ({ icon, label, isActive, onClick, darkMode }: any) => (
   <button onClick={onClick} className="relative flex flex-col items-center justify-center flex-1 transition-all duration-300 outline-none group">
-    <div className={`absolute inset-0 mx-1 my-2 rounded-2xl transition-all duration-700 ease-out ${isActive ? (darkMode ? 'bg-red-500/10' : 'bg-red-50') : 'bg-transparent group-hover:bg-gray-100/30'}`} />
-    <div className={`relative z-10 flex flex-col items-center gap-1 transition-all duration-500 ease-in-out ${isActive ? '-translate-y-1' : 'translate-y-0'}`}>
-      <div className={`transition-all duration-500 p-1.5 rounded-xl ${isActive ? 'text-red-600 scale-110 drop-shadow-[0_0_8px_rgba(220,38,38,0.3)]' : darkMode ? 'text-gray-500 opacity-60' : 'text-gray-400 opacity-70'}`}>
+    <div className={`absolute inset-0 mx-0.5 my-1 rounded-xl transition-all duration-700 ease-out ${isActive ? (darkMode ? 'bg-red-500/10' : 'bg-red-50') : 'bg-transparent group-hover:bg-gray-100/30'}`} />
+    <div className={`relative z-10 flex flex-col items-center gap-0.5 transition-all duration-500 ease-in-out ${isActive ? '-translate-y-0.5' : 'translate-y-0'}`}>
+      <div className={`transition-all duration-500 p-1 rounded-lg ${isActive ? 'text-red-600 scale-110 drop-shadow-[0_0_8px_rgba(220,38,38,0.3)]' : darkMode ? 'text-gray-500 opacity-60' : 'text-gray-400 opacity-70'}`}>
         {icon}
       </div>
-      <span className={`text-[8px] font-black uppercase tracking-[0.18em] transition-all duration-500 ${isActive ? 'text-red-600 opacity-100' : 'text-gray-500 opacity-0 translate-y-2'}`}>
+      <span className={`text-[7px] font-black uppercase tracking-[0.18em] transition-all duration-500 ${isActive ? 'text-red-600 opacity-100' : 'text-gray-500 opacity-0 translate-y-1'}`}>
         {label}
       </span>
     </div>
-    <div className={`absolute bottom-0 h-0.5 rounded-full bg-red-600 transition-all duration-500 ease-in-out shadow-[0_-2px_6px_rgba(220,38,38,0.4)] ${isActive ? 'w-8 opacity-100' : 'w-0 opacity-0'}`} />
+    <div className={`absolute bottom-0 h-0.5 rounded-full bg-red-600 transition-all duration-500 ease-in-out shadow-[0_-2px_6px_rgba(220,38,38,0.4)] ${isActive ? 'w-6 opacity-100' : 'w-0 opacity-0'}`} />
   </button>
 );

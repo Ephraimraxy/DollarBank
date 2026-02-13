@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowRight, LayoutGrid, Sun, Moon, Info, Shield, Server, X } from 'lucide-react';
+import { ArrowRight, Sun, Moon, Info, Shield, Server, X, DollarSign, Sparkles, TrendingUp } from 'lucide-react';
 
 interface Props {
   darkMode: boolean;
@@ -8,46 +8,76 @@ interface Props {
 }
 
 export default function Splash({ darkMode, setDarkMode, onNext }: Props) {
+  const [currentScreen, setCurrentScreen] = useState(0); // 0: left, 1: middle, 2: right
   const [showInfo, setShowInfo] = useState(false);
 
+  const screens = [
+    {
+      title: "Welcome to Vault ID",
+      description: "Get ready for seamless bill payments and effortless money transfers.",
+      bgColor: darkMode ? 'bg-gradient-to-b from-gray-900 via-gray-950 to-black' : 'bg-red-700',
+      showSkip: true
+    },
+    {
+      title: "Let's get you in",
+      description: "Ready to experience seamless banking and management. Let's start by creating your account.",
+      bgColor: darkMode ? 'bg-gradient-to-b from-gray-900 via-gray-950 to-black' : 'bg-white',
+      showSkip: false
+    },
+    {
+      title: "Start Exploring",
+      description: "Dive into a world of convenience. Pay bills, transfer funds, and stay in control of your finances—all in one place.",
+      bgColor: darkMode ? 'bg-gradient-to-b from-gray-900 via-gray-950 to-black' : 'bg-red-700',
+      showSkip: true
+    }
+  ];
+
+  const handleNext = () => {
+    if (currentScreen < 2) {
+      setCurrentScreen(currentScreen + 1);
+    } else {
+      onNext();
+    }
+  };
+
+  const handleSkip = () => {
+    onNext();
+  };
+
   return (
-    <div className={`h-full relative overflow-hidden flex flex-col justify-between p-8 transition-colors duration-700 ${
-      darkMode 
-        ? 'bg-gradient-to-b from-gray-900 via-gray-950 to-black' 
-        : 'bg-red-700'
-    }`}>
-      {/* Information Overlay (Functional Box Icon Content) */}
+    <div className={`h-full relative overflow-hidden flex flex-col transition-colors duration-700 ${screens[currentScreen].bgColor}`}>
+      {/* Information Overlay */}
       {showInfo && (
-        <div className="absolute inset-0 z-[100] bg-black/80 backdrop-blur-xl flex items-center justify-center p-8 animate-in fade-in duration-300">
-          <div className={`w-full max-w-sm p-8 rounded-[40px] border shadow-2xl relative ${darkMode ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-100'}`}>
+        <div className="absolute inset-0 z-[100] bg-black/80 backdrop-blur-xl flex items-center justify-center p-6 animate-in fade-in duration-300">
+          <div className={`w-full max-w-sm p-6 rounded-[32px] border shadow-2xl relative ${darkMode ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-100'}`}>
             <button 
               onClick={() => setShowInfo(false)}
-              className="absolute top-6 right-6 p-2 rounded-full hover:bg-gray-100/10 transition-colors"
+              className="absolute top-4 right-4 p-2 rounded-full hover:bg-gray-100/10 transition-colors"
             >
-              <X size={20} className={darkMode ? 'text-gray-400' : 'text-gray-600'} />
+              <X size={18} className={darkMode ? 'text-gray-400' : 'text-gray-600'} />
             </button>
             
-            <h3 className={`text-xl font-black uppercase tracking-widest mb-6 ${darkMode ? 'text-white' : 'text-gray-900'}`}>vault_id system</h3>
+            <h3 className={`text-lg font-black uppercase tracking-widest mb-4 ${darkMode ? 'text-white' : 'text-gray-900'}`}>vault_id system</h3>
             
-            <div className="space-y-6">
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 bg-red-600/10 text-red-600 rounded-xl flex items-center justify-center"><Shield size={20} /></div>
+            <div className="space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 bg-red-600/10 text-red-600 rounded-xl flex items-center justify-center"><Shield size={18} /></div>
                 <div>
-                  <p className="text-[10px] font-black uppercase text-gray-500 tracking-widest">Encryption</p>
+                  <p className="text-[9px] font-black uppercase text-gray-500 tracking-widest">Encryption</p>
                   <p className={`text-xs font-bold ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>AES-256 Quantum Proof</p>
                 </div>
               </div>
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 bg-blue-600/10 text-blue-600 rounded-xl flex items-center justify-center"><Server size={20} /></div>
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 bg-blue-600/10 text-blue-600 rounded-xl flex items-center justify-center"><Server size={18} /></div>
                 <div>
-                  <p className="text-[10px] font-black uppercase text-gray-500 tracking-widest">Node Status</p>
+                  <p className="text-[9px] font-black uppercase text-gray-500 tracking-widest">Node Status</p>
                   <p className={`text-xs font-bold ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>Global Core Active</p>
                 </div>
               </div>
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 bg-purple-600/10 text-purple-600 rounded-xl flex items-center justify-center"><Info size={20} /></div>
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 bg-purple-600/10 text-purple-600 rounded-xl flex items-center justify-center"><Info size={18} /></div>
                 <div>
-                  <p className="text-[10px] font-black uppercase text-gray-500 tracking-widest">Build Version</p>
+                  <p className="text-[9px] font-black uppercase text-gray-500 tracking-widest">Build Version</p>
                   <p className={`text-xs font-bold ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>V3.2.0 Platinum</p>
                 </div>
               </div>
@@ -55,7 +85,7 @@ export default function Splash({ darkMode, setDarkMode, onNext }: Props) {
             
             <button 
               onClick={() => setShowInfo(false)}
-              className="w-full mt-10 py-4 bg-red-600 text-white rounded-2xl font-black uppercase tracking-widest text-[10px]"
+              className="w-full mt-6 py-3 bg-red-600 text-white rounded-xl font-black uppercase tracking-widest text-[9px]"
             >
               Return to Access
             </button>
@@ -63,91 +93,201 @@ export default function Splash({ darkMode, setDarkMode, onNext }: Props) {
         </div>
       )}
 
-      {/* Background Abstract Geometric Shape */}
-      <div className="absolute inset-0 flex items-center justify-center opacity-40 pointer-events-none">
-        <div className="relative w-[300px] h-[300px] animate-[pulse_6s_ease-in-out_infinite]">
-            <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" className="w-full h-full drop-shadow-[0_0_30px_rgba(255,255,255,0.1)]">
-                <defs>
-                    <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop
-                          offset="0%"
-                          style={{
-                            stopColor: darkMode ? '#ef4444' : '#b91c1c',
-                            stopOpacity: 0.9
-                          }}
-                        />
-                        <stop
-                          offset="100%"
-                          style={{
-                            stopColor: darkMode ? '#7f1d1d' : '#7f1d1d',
-                            stopOpacity: 0.8
-                          }}
-                        />
-                    </linearGradient>
-                </defs>
-                <path fill="url(#grad1)" d="M44.7,-76.4C58.1,-69.2,69.2,-58.1,76.4,-44.7C83.7,-31.3,87.1,-15.7,85.6,-0.9C84,14,77.5,27.9,68.7,40.1C59.9,52.3,48.7,62.8,35.6,70.5C22.5,78.2,7.5,83.1,-8.5,82.3C-24.5,81.5,-41.5,75.1,-55.1,64.2C-68.7,53.4,-78.9,38.1,-83.9,21.7C-88.9,5.3,-88.7,-12.3,-82.9,-27.9C-77.1,-43.5,-65.7,-57.1,-52.1,-64.4C-38.5,-71.7,-22.7,-72.7,-7.1,-71.4C8.4,-70.2,24,-66.6,44.7,-76.4Z" transform="translate(100 100)" />
-            </svg>
-            <div className="absolute inset-0 flex items-center justify-center">
-                 <div className="w-40 h-40 bg-red-800/40 backdrop-blur-3xl rounded-[40px] border border-red-900/50 rotate-12"></div>
-                 <div className="absolute w-40 h-40 bg-red-900/50 backdrop-blur-2xl rounded-[40px] border border-red-900/60 -rotate-12"></div>
-            </div>
-        </div>
-      </div>
-
       {/* Top Header */}
-      <div className="relative z-10 flex justify-between items-center text-white">
-        <span className="font-black text-sm tracking-widest uppercase opacity-80">vault_id</span>
+      <div className="relative z-10 flex justify-between items-center p-4">
+        <span className={`font-black text-xs tracking-widest uppercase ${darkMode || currentScreen === 1 ? 'text-white' : 'text-white'} opacity-80`}>vault_id</span>
         <div className="flex gap-2">
+          {screens[currentScreen].showSkip && (
             <button 
-                onClick={() => setDarkMode(!darkMode)}
-                className="w-10 h-10 bg-white/10 backdrop-blur-md rounded-xl flex items-center justify-center border border-white/10 active:scale-90 transition-transform"
+              onClick={handleSkip}
+              className={`px-3 py-1.5 text-[9px] font-black uppercase tracking-widest rounded-lg transition-colors ${
+                darkMode || currentScreen === 1 
+                  ? 'text-white/60 hover:text-white' 
+                  : 'text-white/60 hover:text-white'
+              }`}
             >
-                {darkMode ? <Sun size={20} /> : <Moon size={20} />}
+              Skip
             </button>
-            <button 
-              onClick={() => setShowInfo(true)}
-              className="w-10 h-10 bg-white/10 backdrop-blur-md rounded-xl flex items-center justify-center border border-white/10 active:scale-90 transition-transform"
-            >
-                <LayoutGrid size={20} />
-            </button>
+          )}
+          <button 
+            onClick={() => setDarkMode(!darkMode)}
+            className={`w-9 h-9 backdrop-blur-md rounded-lg flex items-center justify-center border transition-all ${
+              darkMode || currentScreen === 1
+                ? 'bg-white/10 border-white/10 text-white'
+                : 'bg-white/10 border-white/10 text-white'
+            } active:scale-90`}
+          >
+            {darkMode ? <Sun size={18} /> : <Moon size={18} />}
+          </button>
+          <button 
+            onClick={() => setShowInfo(true)}
+            className={`w-9 h-9 backdrop-blur-md rounded-lg flex items-center justify-center border transition-all ${
+              darkMode || currentScreen === 1
+                ? 'bg-white/10 border-white/10 text-white'
+                : 'bg-white/10 border-white/10 text-white'
+            } active:scale-90`}
+          >
+            <Info size={18} />
+          </button>
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="relative z-10">
-        <div className="flex items-center gap-6">
-           <div className="rotate-[-90deg] origin-center -ml-8">
-             <span className="text-white text-[10px] font-black uppercase tracking-[0.6em] opacity-40">Manage</span>
-           </div>
-           <h1 className="text-white text-6xl font-black leading-tight tracking-tighter">
-             Your-<br />
-             <span className="opacity-90">Finance</span>
-           </h1>
-        </div>
+      {/* Screen Content */}
+      <div className="flex-1 flex items-center justify-center relative">
+        {/* Screen 0: Left - Welcome */}
+        {currentScreen === 0 && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center px-6 animate-in fade-in slide-in-from-left duration-500">
+            {/* Badge */}
+            <div className={`mb-6 px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest ${
+              darkMode ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30' : 'bg-yellow-400 text-yellow-900'
+            }`}>
+              Fast and safe
+            </div>
+            
+            {/* Coins */}
+            <div className="relative mb-8">
+              <div className="flex items-center gap-4">
+                <div className={`w-16 h-16 rounded-full flex items-center justify-center text-2xl font-black shadow-lg ${
+                  darkMode ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30' : 'bg-yellow-400 text-yellow-900'
+                }`}>
+                  $
+                </div>
+                <div className={`w-16 h-16 rounded-full flex items-center justify-center text-2xl font-black shadow-lg ${
+                  darkMode ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30' : 'bg-yellow-400 text-yellow-900'
+                }`}>
+                  £
+                </div>
+              </div>
+              {/* Decorative shapes */}
+              <div className="absolute -top-4 -left-4 w-8 h-8 bg-red-600/20 rounded-lg rotate-45 blur-sm"></div>
+              <div className="absolute -bottom-4 -right-4 w-6 h-6 bg-red-500/20 rounded-lg rotate-12 blur-sm"></div>
+            </div>
+          </div>
+        )}
+
+        {/* Screen 1: Middle - Auth Options */}
+        {currentScreen === 1 && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center px-6 animate-in fade-in zoom-in-95 duration-500">
+            {/* Circular element with cards */}
+            <div className="relative mb-8">
+              <div className={`w-32 h-32 rounded-full flex items-center justify-center ${
+                darkMode ? 'bg-red-600/20 border border-red-500/30' : 'bg-red-100'
+              }`}>
+                <Sparkles size={48} className={darkMode ? 'text-red-400' : 'text-red-600'} />
+              </div>
+              
+              {/* Left card */}
+              <div className={`absolute -left-8 top-1/2 -translate-y-1/2 w-20 p-2 rounded-lg shadow-lg ${
+                darkMode ? 'bg-gray-900 border border-gray-800' : 'bg-white border border-gray-200'
+              }`}>
+                <div className="w-6 h-6 rounded-full bg-red-600 mx-auto mb-1"></div>
+                <p className="text-[8px] font-bold text-center mb-0.5">Subscription paid</p>
+                <p className={`text-[9px] font-black text-center ${darkMode ? 'text-white' : 'text-gray-900'}`}>$1,002</p>
+              </div>
+              
+              {/* Right card */}
+              <div className={`absolute -right-8 top-1/2 -translate-y-1/2 w-20 p-2 rounded-lg shadow-lg ${
+                darkMode ? 'bg-gray-900 border border-gray-800' : 'bg-white border border-gray-200'
+              }`}>
+                <div className="text-2xl text-center mb-1">😊</div>
+                <p className={`text-[8px] font-bold text-center ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>Satisfied Users</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Screen 2: Right - Start Exploring */}
+        {currentScreen === 2 && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center px-6 animate-in fade-in slide-in-from-right duration-500">
+            {/* Speech bubble with stars */}
+            <div className="relative mb-8">
+              <div className={`w-24 h-24 rounded-2xl flex items-center justify-center shadow-lg ${
+                darkMode ? 'bg-white/10 border border-white/20' : 'bg-white'
+              }`}>
+                <div className="flex gap-1">
+                  <span className="text-2xl">⭐</span>
+                  <span className="text-2xl">⭐</span>
+                  <span className="text-2xl">⭐</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Footer Actions */}
-      <div className="relative z-10 flex flex-col items-center gap-6">
-        <div className="flex gap-1.5 items-center">
-            <div className="w-1.5 h-1.5 rounded-full bg-white opacity-40"></div>
-            <div className="w-4 h-1.5 rounded-full bg-white"></div>
-            <div className="w-1.5 h-1.5 rounded-full bg-white opacity-40"></div>
+      {/* Bottom Card */}
+      <div className="relative z-10 px-4 pb-6">
+        <div className={`rounded-[32px] p-6 shadow-2xl ${
+          darkMode ? 'bg-gray-900 border border-gray-800' : 'bg-white'
+        }`}>
+          <h2 className={`text-2xl font-black mb-2 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+            {screens[currentScreen].title}
+          </h2>
+          <p className={`text-sm mb-6 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+            {screens[currentScreen].description}
+          </p>
+
+          {/* Pagination dots */}
+          {currentScreen !== 1 && (
+            <div className="flex gap-1.5 justify-center mb-6">
+              {[0, 1, 2].map((idx) => (
+                <div
+                  key={idx}
+                  className={`h-1.5 rounded-full transition-all ${
+                    idx === currentScreen
+                      ? darkMode ? 'bg-white w-6' : 'bg-red-600 w-6'
+                      : darkMode ? 'bg-white/30 w-1.5' : 'bg-gray-300 w-1.5'
+                  }`}
+                />
+              ))}
+            </div>
+          )}
+
+          {/* Action Buttons */}
+          {currentScreen === 1 ? (
+            <div className="space-y-3">
+              <button
+                onClick={onNext}
+                className={`w-full py-3.5 rounded-xl font-black uppercase tracking-widest text-xs transition-all ${
+                  darkMode
+                    ? 'bg-red-600 text-white hover:bg-red-700'
+                    : 'bg-red-600 text-white hover:bg-red-700'
+                } active:scale-95`}
+              >
+                Login
+              </button>
+              <button
+                onClick={() => {
+                  onNext();
+                  // Navigate to sign up - this will be handled by App.tsx
+                  setTimeout(() => {
+                    const event = new CustomEvent('navigate-to-signup');
+                    window.dispatchEvent(event);
+                  }, 100);
+                }}
+                className={`w-full py-3.5 rounded-xl font-black uppercase tracking-widest text-xs border-2 transition-all ${
+                  darkMode
+                    ? 'border-gray-700 text-gray-300 hover:bg-gray-800'
+                    : 'border-gray-200 text-gray-700 hover:bg-gray-50'
+                } active:scale-95`}
+              >
+                Signup
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={handleNext}
+              className={`w-full py-3.5 rounded-xl font-black uppercase tracking-widest text-xs transition-all ${
+                darkMode
+                  ? 'bg-red-600 text-white hover:bg-red-700'
+                  : 'bg-red-600 text-white hover:bg-red-700'
+              } active:scale-95 flex items-center justify-center gap-2`}
+            >
+              Next
+              <ArrowRight size={16} />
+            </button>
+          )}
         </div>
-
-        <button 
-            onClick={onNext}
-            className="w-full bg-white text-black py-5 rounded-[24px] font-black uppercase tracking-widest flex items-center justify-center gap-3 shadow-2xl active:scale-95 transition-all group"
-        >
-            Swipe left to access
-            <ArrowRight size={20} className="group-hover:translate-x-2 transition-transform" />
-        </button>
-
-        <button 
-            onClick={onNext}
-            className="text-white text-[10px] font-black uppercase tracking-[0.4em] opacity-60 hover:opacity-100 transition-opacity"
-        >
-            Skip
-        </button>
       </div>
     </div>
   );

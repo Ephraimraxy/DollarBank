@@ -29,6 +29,16 @@ export default function AuthFlow({ currentView, setView, onLogin, darkMode, setD
       let response;
       if (isRegister) {
         response = await api.register({ fullName, email, password });
+        
+        // For registration, show verification message instead of logging in
+        if (response.message) {
+          setInfo('Registration successful! Please check your email to verify your account before signing in.');
+          setTimeout(() => {
+            setInfo('');
+            setView(ViewState.SIGN_IN);
+          }, 5000);
+          return;
+        }
       } else {
         response = await api.login({ email, password });
       }
@@ -55,12 +65,12 @@ export default function AuthFlow({ currentView, setView, onLogin, darkMode, setD
 
   const renderSignIn = () => (
     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="mb-12">
-        <h2 className={`text-4xl font-black tracking-tighter mb-2 ${darkMode ? 'text-white' : 'text-gray-900'}`}>Welcome Back</h2>
-        <p className="text-sm font-bold text-gray-500 uppercase tracking-widest">Identify Yourself to Continue</p>
+      <div className="mb-6">
+        <h2 className={`text-3xl font-black tracking-tighter mb-1 leading-tight ${darkMode ? 'text-white' : 'text-gray-900'}`}>Welcome Back</h2>
+        <p className="text-xs font-bold text-gray-500 uppercase tracking-widest">Identify Yourself to Continue</p>
       </div>
 
-      <div className="space-y-8">
+      <div className="space-y-5">
         <AuthInput icon={<Mail size={18} />} label="Email Address" type="email" value={email} onChange={setEmail} darkMode={darkMode} />
         <AuthInput icon={<Lock size={18} />} label="Security Key" type={showPassword ? "text" : "password"} value={password} onChange={setPassword} showToggle onToggle={() => setShowPassword(!showPassword)} darkMode={darkMode} />
 
@@ -74,11 +84,11 @@ export default function AuthFlow({ currentView, setView, onLogin, darkMode, setD
         </div>
       </div>
 
-      <div className="mt-12 space-y-4">
-        <button onClick={() => handleAuth(false)} disabled={isLoading} className="w-full bg-red-600 text-white font-black uppercase tracking-[0.2em] py-5 rounded-[24px] shadow-2xl hover:bg-red-700 active:scale-95 transition-all text-xs disabled:opacity-50">
+      <div className="mt-6 space-y-3">
+        <button onClick={() => handleAuth(false)} disabled={isLoading} className="w-full bg-red-600 text-white font-black uppercase tracking-[0.2em] py-3.5 rounded-xl shadow-xl hover:bg-red-700 active:scale-95 transition-all text-[10px] disabled:opacity-50">
           {isLoading ? 'Decrypting...' : 'Open Secure Vault'}
         </button>
-        <button onClick={() => setView(ViewState.SIGN_UP)} className={`w-full font-black uppercase tracking-widest py-5 rounded-[24px] border-2 text-xs transition-all ${darkMode ? 'border-gray-800 text-gray-400 hover:bg-gray-800' : 'border-gray-100 text-gray-500 hover:bg-gray-50'
+        <button onClick={() => setView(ViewState.SIGN_UP)} className={`w-full font-black uppercase tracking-widest py-3.5 rounded-xl border-2 text-[10px] transition-all ${darkMode ? 'border-gray-800 text-gray-400 hover:bg-gray-800' : 'border-gray-100 text-gray-500 hover:bg-gray-50'
           }`}>
           Create New Identity
         </button>
@@ -105,22 +115,27 @@ export default function AuthFlow({ currentView, setView, onLogin, darkMode, setD
 
   const renderSignUp = () => (
     <div className="animate-in fade-in slide-in-from-right-4 duration-500">
-      <div className="mb-12">
-        <h2 className={`text-4xl font-black tracking-tighter mb-2 ${darkMode ? 'text-white' : 'text-gray-900'}`}>New Account</h2>
-        <p className="text-sm font-bold text-gray-500 uppercase tracking-widest">Establish your Platinum Identity</p>
+      <div className="mb-6">
+        <h2 className={`text-3xl font-black tracking-tighter mb-1 leading-tight ${darkMode ? 'text-white' : 'text-gray-900'}`}>New Account</h2>
+        <p className="text-xs font-bold text-gray-500 uppercase tracking-widest">Establish your Platinum Identity</p>
       </div>
 
-      <div className="space-y-8">
+      <div className="space-y-5">
         <AuthInput icon={<User size={18} />} label="Legal Full Name" type="text" value={fullName} onChange={setFullName} darkMode={darkMode} />
         <AuthInput icon={<Mail size={18} />} label="Secure Email" type="email" value={email} onChange={setEmail} darkMode={darkMode} />
         <AuthInput icon={<Lock size={18} />} label="Vault Passphrase" type="password" value={password} onChange={setPassword} darkMode={darkMode} />
       </div>
 
-      <div className="mt-12 space-y-4">
-        <button onClick={() => handleAuth(true)} disabled={isLoading} className="w-full bg-red-600 text-white font-black uppercase tracking-widest py-5 rounded-[24px] shadow-2xl hover:bg-red-700 active:scale-95 transition-all text-xs disabled:opacity-50">
+      <div className="mt-4 h-4">
+        {error && <span className="text-[10px] font-black uppercase text-red-500">{error}</span>}
+        {info && <span className="text-[10px] font-black uppercase text-emerald-500">{info}</span>}
+      </div>
+
+      <div className="mt-6 space-y-3">
+        <button onClick={() => handleAuth(true)} disabled={isLoading} className="w-full bg-red-600 text-white font-black uppercase tracking-widest py-3.5 rounded-xl shadow-xl hover:bg-red-700 active:scale-95 transition-all text-[10px] disabled:opacity-50">
           {isLoading ? 'Registering...' : 'Register Platinum Identity'}
         </button>
-        <button onClick={() => setView(ViewState.SIGN_IN)} className={`w-full font-black uppercase tracking-widest py-5 rounded-[24px] border-2 text-xs transition-all ${darkMode ? 'border-gray-800 text-gray-400 hover:bg-gray-800' : 'border-gray-100 text-gray-500 hover:bg-gray-50'
+        <button onClick={() => setView(ViewState.SIGN_IN)} className={`w-full font-black uppercase tracking-widest py-3.5 rounded-xl border-2 text-[10px] transition-all ${darkMode ? 'border-gray-800 text-gray-400 hover:bg-gray-800' : 'border-gray-100 text-gray-500 hover:bg-gray-50'
           }`}>
           Already Have Access? Sign In
         </button>
@@ -130,35 +145,35 @@ export default function AuthFlow({ currentView, setView, onLogin, darkMode, setD
 
   const renderForgot = () => (
     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="mb-12">
-        <h2 className={`text-3xl font-black tracking-tighter mb-2 ${darkMode ? 'text-white' : 'text-gray-900'}`}>Vault Recovery</h2>
-        <p className="text-sm font-bold text-gray-500 uppercase tracking-widest">Restore Access to Assets</p>
+      <div className="mb-6">
+        <h2 className={`text-2xl font-black tracking-tighter mb-1 leading-tight ${darkMode ? 'text-white' : 'text-gray-900'}`}>Vault Recovery</h2>
+        <p className="text-xs font-bold text-gray-500 uppercase tracking-widest">Restore Access to Assets</p>
       </div>
 
-      <div className={`${darkMode ? 'bg-red-500/5 border-red-900/20' : 'bg-red-50 border-red-100'} p-6 rounded-3xl border mb-8`}>
-        <div className="flex gap-4 items-start">
-          <div className="p-2 bg-red-600 rounded-xl text-white">
-            <Globe size={20} />
+      <div className={`${darkMode ? 'bg-red-500/5 border-red-900/20' : 'bg-red-50 border-red-100'} p-4 rounded-xl border mb-4`}>
+        <div className="flex gap-3 items-start">
+          <div className="p-1.5 bg-red-600 rounded-lg text-white">
+            <Globe size={16} />
           </div>
           <div>
-            <h4 className="font-bold text-sm mb-1 text-red-600">Encrypted Reset</h4>
-            <p className="text-xs text-gray-500 leading-relaxed">For security, we will send an encrypted recovery sequence to your verified email address.</p>
+            <h4 className="font-bold text-xs mb-0.5 text-red-600">Encrypted Reset</h4>
+            <p className="text-[10px] text-gray-500 leading-relaxed">For security, we will send an encrypted recovery sequence to your verified email address.</p>
           </div>
         </div>
       </div>
 
-      <AuthInput icon={<Mail size={18} />} label="Verification Email" type="email" value={email} onChange={setEmail} darkMode={darkMode} />
+      <AuthInput icon={<Mail size={16} />} label="Verification Email" type="email" value={email} onChange={setEmail} darkMode={darkMode} />
 
-      <div className="mt-4 h-4">
-        {error && <span className="text-[10px] font-black uppercase text-red-500">{error}</span>}
-        {info && <span className="text-[10px] font-black uppercase text-emerald-500">{info}</span>}
+      <div className="mt-3 h-3">
+        {error && <span className="text-[9px] font-black uppercase text-red-500">{error}</span>}
+        {info && <span className="text-[9px] font-black uppercase text-emerald-500">{info}</span>}
       </div>
 
-      <div className="mt-8">
+      <div className="mt-4">
         <button
           onClick={handleForgotPassword}
           disabled={isLoading || !email}
-          className="w-full bg-red-600 text-white font-black uppercase tracking-widest py-5 rounded-[24px] shadow-2xl hover:bg-red-700 active:scale-95 transition-all text-xs disabled:opacity-50"
+          className="w-full bg-red-600 text-white font-black uppercase tracking-widest py-3.5 rounded-xl shadow-xl hover:bg-red-700 active:scale-95 transition-all text-[10px] disabled:opacity-50"
         >
           {isLoading ? 'Sending Link...' : 'Begin Recovery'}
         </button>
@@ -167,17 +182,17 @@ export default function AuthFlow({ currentView, setView, onLogin, darkMode, setD
   );
 
   const renderReverify = () => (
-    <div className="animate-in zoom-in-95 duration-700 flex flex-col items-center justify-center min-h-[70vh] text-center">
-      <div className="relative mb-10">
-        <div className="absolute -inset-4 bg-red-600/20 rounded-full blur-2xl animate-pulse"></div>
-        <div className={`relative w-24 h-24 rounded-full border-2 border-dashed flex items-center justify-center animate-[spin_10s_linear_infinite] ${darkMode ? 'border-red-900/40' : 'border-red-200'}`}></div>
+    <div className="animate-in zoom-in-95 duration-700 flex flex-col items-center justify-center min-h-[60vh] text-center">
+      <div className="relative mb-6">
+        <div className="absolute -inset-3 bg-red-600/20 rounded-full blur-xl animate-pulse"></div>
+        <div className={`relative w-20 h-20 rounded-full border-2 border-dashed flex items-center justify-center animate-[spin_10s_linear_infinite] ${darkMode ? 'border-red-900/40' : 'border-red-200'}`}></div>
         <div className="absolute inset-0 flex items-center justify-center">
-          <AlertTriangle size={40} className="text-red-600" />
+          <AlertTriangle size={32} className="text-red-600" />
         </div>
       </div>
 
-      <h2 className={`text-2xl font-black tracking-tighter mb-4 ${darkMode ? 'text-white' : 'text-gray-900'}`}>Verification Interrupted</h2>
-      <p className="text-sm text-gray-500 font-medium mb-6 max-w-[280px]">
+      <h2 className={`text-xl font-black tracking-tighter mb-2 leading-tight ${darkMode ? 'text-white' : 'text-gray-900'}`}>Verification Interrupted</h2>
+      <p className="text-xs text-gray-500 font-medium mb-4 max-w-[280px] leading-relaxed">
         A verification issue was detected. You can recalibrate your connection or request a new secure link.
       </p>
 
@@ -192,12 +207,12 @@ export default function AuthFlow({ currentView, setView, onLogin, darkMode, setD
         </p>
       )}
 
-      <div className="w-full space-y-3 px-4">
-        <button onClick={() => setView(ViewState.SIGN_IN)} className="w-full bg-red-600 text-white font-black uppercase tracking-widest py-5 rounded-[24px] shadow-2xl flex items-center justify-center gap-3 active:scale-95 transition-all text-xs">
-          <RefreshCw size={18} />
+      <div className="w-full space-y-2 px-4">
+        <button onClick={() => setView(ViewState.SIGN_IN)} className="w-full bg-red-600 text-white font-black uppercase tracking-widest py-3 rounded-xl shadow-xl flex items-center justify-center gap-2 active:scale-95 transition-all text-[10px]">
+          <RefreshCw size={14} />
           Recalibrate & Retry
         </button>
-        <button onClick={() => setView(ViewState.SUPPORT)} className={`w-full font-black uppercase tracking-widest py-5 rounded-[24px] border-2 text-xs transition-all ${darkMode ? 'border-gray-800 text-gray-400 hover:bg-gray-800' : 'border-gray-100 text-gray-500 hover:bg-gray-50'
+        <button onClick={() => setView(ViewState.SUPPORT)} className={`w-full font-black uppercase tracking-widest py-3 rounded-xl border-2 text-[10px] transition-all ${darkMode ? 'border-gray-800 text-gray-400 hover:bg-gray-800' : 'border-gray-100 text-gray-500 hover:bg-gray-50'
           }`}>
           Contact Concierge
         </button>
@@ -218,7 +233,7 @@ export default function AuthFlow({ currentView, setView, onLogin, darkMode, setD
             }
           }}
           disabled={isLoading || !email}
-          className="w-full text-[10px] font-black uppercase tracking-widest py-4 rounded-[20px] border border-dashed border-red-500/50 text-red-600 disabled:opacity-50"
+          className="w-full text-[9px] font-black uppercase tracking-widest py-2.5 rounded-lg border border-dashed border-red-500/50 text-red-600 disabled:opacity-50"
         >
           {isLoading ? 'Sending...' : 'Resend Verification Email'}
         </button>
@@ -227,8 +242,8 @@ export default function AuthFlow({ currentView, setView, onLogin, darkMode, setD
   );
 
   return (
-    <div className={`min-h-full p-8 flex flex-col transition-colors duration-300 ${darkMode ? 'bg-gray-950 text-white' : 'bg-gray-50'}`}>
-      <div className="mb-10 flex justify-between items-center">
+    <div className={`min-h-full p-4 flex flex-col transition-colors duration-300 ${darkMode ? 'bg-gray-950 text-white' : 'bg-gray-50'}`}>
+      <div className="mb-4 flex justify-between items-center">
         {currentView !== ViewState.SIGN_IN && currentView !== ViewState.REVERIFY ? (
           <button onClick={() => setView(ViewState.SIGN_IN)} className={`p-2 rounded-xl transition-colors ${darkMode ? 'hover:bg-gray-800 text-white' : 'hover:bg-gray-100 text-gray-900'}`}>
             <ArrowLeft size={24} />
@@ -252,7 +267,7 @@ export default function AuthFlow({ currentView, setView, onLogin, darkMode, setD
 
 const AuthInput = ({ icon, label, type, value, onChange, showToggle, onToggle, darkMode }: any) => (
   <div className="relative group">
-    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500 mb-2 block">{label}</label>
+    <label className="text-[9px] font-black uppercase tracking-[0.2em] text-gray-500 mb-1 block">{label}</label>
     <div className="relative flex items-center">
       <div className={`absolute left-0 transition-colors ${darkMode ? 'text-gray-700' : 'text-gray-300'} group-focus-within:text-red-600`}>
         {icon}
@@ -261,12 +276,12 @@ const AuthInput = ({ icon, label, type, value, onChange, showToggle, onToggle, d
         type={type}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className={`w-full bg-transparent border-b-2 py-3 pl-8 pr-10 outline-none font-bold text-sm transition-all ${darkMode ? 'border-gray-800 text-white focus:border-red-600' : 'border-gray-200 text-gray-900 focus:border-red-600'
+        className={`w-full bg-transparent border-b-2 py-2 pl-7 pr-8 outline-none font-bold text-xs transition-all ${darkMode ? 'border-gray-800 text-white focus:border-red-600' : 'border-gray-200 text-gray-900 focus:border-red-600'
           }`}
       />
       {showToggle && (
         <button onClick={onToggle} className="absolute right-0 text-gray-500 hover:text-red-600 transition-colors">
-          {type === 'password' ? <Eye size={18} /> : <EyeOff size={18} />}
+          {type === 'password' ? <Eye size={14} /> : <EyeOff size={14} />}
         </button>
       )}
     </div>
