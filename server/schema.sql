@@ -3,6 +3,11 @@ CREATE TABLE IF NOT EXISTS users (
   full_name VARCHAR(255) NOT NULL,
   email VARCHAR(255) UNIQUE NOT NULL,
   password_hash VARCHAR(255) NOT NULL,
+  is_admin BOOLEAN DEFAULT FALSE,
+  is_verified BOOLEAN DEFAULT FALSE,
+  verification_token VARCHAR(255),
+  reset_token VARCHAR(255),
+  reset_token_expiry TIMESTAMP WITH TIME ZONE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 

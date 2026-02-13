@@ -1,6 +1,7 @@
 import express from 'express';
 import { query } from '../db.js';
 import { authenticateToken } from '../middleware/auth.js';
+import { sendTransferNotification } from '../services/email.js';
 
 const router = express.Router();
 
@@ -21,6 +22,7 @@ router.get('/', async (req, res) => {
 router.post('/transfer', async (req, res) => {
     const { amount, recipientEmail } = req.body;
     const userId = req.user.id;
+    const userEmail = req.user.email;
 
     if (!amount || !recipientEmail) return res.status(400).json({ error: 'Missing fields' });
 
@@ -43,6 +45,7 @@ router.post('/transfer', async (req, res) => {
             return res.status(404).json({ error: 'Recipient not found' });
         }
         const recipientId = recipientRes.rows[0].id;
+        const recipientName = recipientRes.rows[0].full_name;
 
         // Get Recipient Account
         const recipientAccRes = await query("SELECT * FROM accounts WHERE user_id = $1 LIMIT 1", [recipientId]);
@@ -62,10 +65,14 @@ router.post('/transfer', async (req, res) => {
 
         await query(
             "INSERT INTO transactions (user_id, type, amount, description, status) VALUES ($1, 'credit', $2, $3, 'completed')",
-            [recipientId, amount, `Received from ${req.user.email}`]
+            [recipientId, amount, `Received from ${userEmail}`]
         );
 
         await query('COMMIT');
+
+        // Send Notification (Fire and forget, don't block response)
+        sendTransferNotification(recipientEmail, amount, userEmail).catch(console.error);
+
         res.json({ status: 'success', message: 'Transfer successful' });
     } catch (err) {
         await query('ROLLBACK');
