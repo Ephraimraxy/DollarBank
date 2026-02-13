@@ -154,9 +154,23 @@ app.use(errorHandler);
 async function startServer() {
     try {
         // Run migrations on startup (only runs pending migrations)
-        if (config.isProduction || process.env.RUN_MIGRATIONS === 'true') {
-            logger.info('Running database migrations...');
-            await runMigrations();
+        // Always run in production (Railway sets NODE_ENV=production)
+        // Can also be forced with RUN_MIGRATIONS=true
+        const shouldRunMigrations = config.isProduction || process.env.RUN_MIGRATIONS === 'true';
+        
+        if (shouldRunMigrations) {
+            logger.info('🔄 Running database migrations...');
+            try {
+                await runMigrations();
+                logger.info('✅ Database migrations completed successfully');
+            } catch (migrationError) {
+                logger.error('❌ Migration failed:', migrationError);
+                // Don't exit - allow server to start even if migrations fail
+                // (migrations might have already been run)
+                logger.warn('⚠️  Continuing server startup despite migration error');
+            }
+        } else {
+            logger.info('⏭️  Skipping migrations (development mode - set NODE_ENV=production or RUN_MIGRATIONS=true to run)');
         }
 
         // Start server

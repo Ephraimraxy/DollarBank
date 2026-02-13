@@ -78,6 +78,31 @@ export const sendPasswordResetEmail = async (email, token) => {
     return sendEmail(email, 'Reset your Vault ID password', html);
 };
 
+export const sendOTPEmail = async (email, otpCode) => {
+    const html = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+      <h1 style="color: #dc2626; font-size: 24px; margin-bottom: 20px;">Verify your Vault ID Account</h1>
+      <p style="color: #374151; font-size: 16px; line-height: 1.6; margin-bottom: 20px;">
+        Thank you for signing up! Please use the following verification code to complete your registration:
+      </p>
+      <div style="text-align: center; margin: 30px 0;">
+        <div style="background-color: #f3f4f6; border: 2px dashed #dc2626; border-radius: 12px; padding: 20px; display: inline-block;">
+          <div style="font-size: 36px; font-weight: bold; color: #dc2626; letter-spacing: 8px; font-family: monospace;">
+            ${otpCode}
+          </div>
+        </div>
+      </div>
+      <p style="color: #6b7280; font-size: 14px; margin-top: 20px;">
+        Enter this code in the verification page to activate your account.
+      </p>
+      <p style="color: #9ca3af; font-size: 12px; margin-top: 30px;">
+        This code will expire in 10 minutes. If you didn't create a Vault ID account, please ignore this email.
+      </p>
+    </div>
+  `;
+    return sendEmail(email, 'Your Vault ID Verification Code', html);
+};
+
 export const sendTransferNotification = async (toEmail, amount, senderName) => {
     const html = `
     <h1>Funds Received</h1>

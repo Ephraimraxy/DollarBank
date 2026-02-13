@@ -30,13 +30,10 @@ export default function AuthFlow({ currentView, setView, onLogin, darkMode, setD
       if (isRegister) {
         response = await api.register({ fullName, email, password });
         
-        // For registration, show verification message instead of logging in
-        if (response.message) {
-          setInfo('Registration successful! Please check your email to verify your account before signing in.');
-          setTimeout(() => {
-            setInfo('');
-            setView(ViewState.SIGN_IN);
-          }, 5000);
+        // For registration, navigate to OTP verification page
+        if (response.email) {
+          localStorage.setItem('pending-verification-email', response.email);
+          setView(ViewState.VERIFY_OTP);
           return;
         }
       } else {

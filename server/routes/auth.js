@@ -4,7 +4,7 @@ import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import { query } from '../db.js';
 import { config } from '../config/index.js';
-import { sendVerificationEmail, sendPasswordResetEmail } from '../services/email.js';
+import { sendVerificationEmail, sendPasswordResetEmail, sendOTPEmail } from '../services/email.js';
 import { asyncHandler, ConflictError, AuthenticationError, NotFoundError, ValidationError } from '../utils/errors.js';
 import {
     registerValidation,
@@ -27,11 +27,13 @@ router.post('/register', authLimiter, validate(registerValidation), asyncHandler
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const verificationToken = crypto.randomBytes(32).toString('hex');
+    // Generate 6-digit OTP
+    const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+    const otpExpiry = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
     const result = await query(
-        'INSERT INTO users (full_name, email, password_hash, verification_token) VALUES ($1, $2, $3, $4) RETURNING id, full_name, email',
-        [fullName, email, hashedPassword, verificationToken]
+        'INSERT INTO users (full_name, email, password_hash, otp_code, otp_expiry) VALUES ($1, $2, $3, $4, $5) RETURNING id, full_name, email',
+        [fullName, email, hashedPassword, otpCode, otpExpiry]
     );
 
     // Create default accounts
@@ -39,13 +41,16 @@ router.post('/register', authLimiter, validate(registerValidation), asyncHandler
     await query("INSERT INTO accounts (user_id, type, balance, account_number) VALUES ($1, 'Checking', 0.00, $2)", [userId, 'CK-' + Date.now()]);
     await query("INSERT INTO accounts (user_id, type, balance, account_number) VALUES ($1, 'Savings', 0.00, $2)", [userId, 'SV-' + Date.now()]);
 
-    // Send Verification Email (fire and forget)
-    sendVerificationEmail(email, verificationToken).catch(err => {
-        console.error('Failed to send verification email:', err);
+    // Send OTP Email (fire and forget)
+    sendOTPEmail(email, otpCode).catch(err => {
+        console.error('Failed to send OTP email:', err);
     });
 
-    const token = jwt.sign({ id: userId, email }, config.jwtSecret, { expiresIn: config.jwtExpiresIn });
-    res.status(201).json({ user: result.rows[0], token, message: 'Verification email sent' });
+    res.status(201).json({ 
+        user: result.rows[0], 
+        message: 'OTP sent to your email',
+        email: email // Return email for frontend to use in OTP verification
+    });
 }));
 
 router.post('/login', authLimiter, validate(loginValidation), asyncHandler(async (req, res) => {
@@ -75,6 +80,71 @@ router.post('/login', authLimiter, validate(loginValidation), asyncHandler(async
 
     const { password_hash, verification_token, reset_token, ...userInfo } = user;
     res.json({ user: userInfo, token });
+}));
+
+router.post('/verify-otp', authLimiter, asyncHandler(async (req, res) => {
+    const { email, otp } = req.body;
+
+    if (!email || !otp || otp.length !== 6) {
+        throw new ValidationError('Email and 6-digit OTP are required');
+    }
+
+    const result = await query(
+        'SELECT * FROM users WHERE email = $1 AND otp_code = $2 AND otp_expiry > NOW()',
+        [email, otp]
+    );
+    
+    if (result.rows.length === 0) {
+        throw new ValidationError('Invalid or expired OTP code');
+    }
+
+    const user = result.rows[0];
+    
+    // Mark user as verified and clear OTP
+    await query(
+        'UPDATE users SET is_verified = TRUE, otp_code = NULL, otp_expiry = NULL WHERE id = $1',
+        [user.id]
+    );
+
+    // Generate JWT token for immediate login
+    const token = jwt.sign(
+        { id: user.id, email: user.email, isAdmin: user.is_admin },
+        config.jwtSecret,
+        { expiresIn: config.jwtExpiresIn }
+    );
+
+    const { password_hash, otp_code, otp_expiry, verification_token, reset_token, ...userInfo } = user;
+    res.json({ 
+        message: 'Email verified successfully',
+        user: { ...userInfo, is_verified: true },
+        token
+    });
+}));
+
+router.post('/resend-otp', authLimiter, validate(passwordResetValidation), asyncHandler(async (req, res) => {
+    const { email } = req.body;
+
+    const result = await query('SELECT * FROM users WHERE email = $1', [email]);
+    if (result.rows.length === 0) {
+        throw new NotFoundError('User not found');
+    }
+
+    const user = result.rows[0];
+    if (user.is_verified) {
+        throw new ConflictError('Email already verified');
+    }
+
+    // Generate new 6-digit OTP
+    const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+    const otpExpiry = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+    await query('UPDATE users SET otp_code = $1, otp_expiry = $2 WHERE id = $3', [otpCode, otpExpiry, user.id]);
+
+    sendOTPEmail(email, otpCode).catch(err => {
+        console.error('Failed to send OTP email:', err);
+    });
+
+    res.json({ message: 'OTP resent to your email' });
 }));
 
 router.post('/verify-email', validate(verifyEmailValidation), asyncHandler(async (req, res) => {

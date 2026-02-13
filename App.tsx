@@ -14,6 +14,7 @@ import AiAssistant from './components/AiAssistant';
 import Splash from './components/Splash';
 import AuthFlow from './components/AuthFlow';
 import VerifyEmail from './components/VerifyEmail';
+import VerifyOTP from './components/VerifyOTP';
 import ResetPassword from './components/ResetPassword';
 import { ViewState } from './types';
 import { ErrorBoundary } from './components/ErrorBoundary';
@@ -154,6 +155,15 @@ export default function App() {
         return <AuthFlow currentView={currentView} setView={setCurrentView} onLogin={handleLoginSuccess} darkMode={darkMode} setDarkMode={setDarkMode} setUser={setUser} />;
       case ViewState.VERIFY_EMAIL:
         return <VerifyEmail setView={setCurrentView} darkMode={darkMode} />;
+      case ViewState.VERIFY_OTP:
+        return <VerifyOTP 
+          email={localStorage.getItem('pending-verification-email') || ''} 
+          setView={setCurrentView} 
+          onLogin={handleLoginSuccess}
+          setUser={setUser}
+          darkMode={darkMode}
+          setDarkMode={setDarkMode}
+        />;
       case ViewState.RESET_PASSWORD:
         return <ResetPassword setView={setCurrentView} darkMode={darkMode} />;
       case ViewState.HOME:
@@ -188,6 +198,7 @@ export default function App() {
     ViewState.FORGOT_PASSWORD,
     ViewState.REVERIFY,
     ViewState.VERIFY_EMAIL,
+    ViewState.VERIFY_OTP,
     ViewState.RESET_PASSWORD,
   ].includes(currentView);
 
