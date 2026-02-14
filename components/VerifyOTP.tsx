@@ -91,6 +91,7 @@ export default function VerifyOTP({ email, setView, onLogin, setUser, darkMode, 
       const normalizedUser = {
         ...user,
         fullName: user.fullName || user.full_name || '',
+        isAdmin: user.isAdmin || user.is_admin || false,
       };
 
       localStorage.setItem('vault_token', token);

@@ -49,6 +49,7 @@ export default function AuthFlow({ currentView, setView, onLogin, darkMode, setD
       const normalizedUser = {
         ...user,
         fullName: user.fullName || user.full_name || '',
+        isAdmin: user.isAdmin || user.is_admin || false,
       };
 
       localStorage.setItem('vault_token', token);
