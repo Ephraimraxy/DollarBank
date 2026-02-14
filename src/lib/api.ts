@@ -45,5 +45,18 @@ export const api = {
         updateUserPassword: (id: number, newPassword: string) => api.request(`/admin/users/${id}/password`, 'PUT', { newPassword }),
         deleteUser: (id: number) => api.request(`/admin/users/${id}`, 'DELETE'),
         getStats: () => api.request('/admin/stats'),
+        getAccounts: () => api.request('/admin/accounts'),
+        getAccount: (id: number) => api.request(`/admin/accounts/${id}`),
+        updateAccountBalance: (id: number, data: any) => api.request(`/admin/accounts/${id}/balance`, 'PUT', data),
+        getTransactions: (filters?: any) => {
+            const params = new URLSearchParams();
+            if (filters?.status) params.append('status', filters.status);
+            if (filters?.type) params.append('type', filters.type);
+            if (filters?.userId) params.append('userId', filters.userId);
+            const query = params.toString();
+            return api.request(`/admin/transactions${query ? '?' + query : ''}`);
+        },
+        updateTransactionStatus: (id: number, status: string) => api.request(`/admin/transactions/${id}/status`, 'PUT', { status }),
+        refundTransaction: (id: number, reason: string) => api.request(`/admin/transactions/${id}/refund`, 'POST', { reason }),
     },
 };

@@ -150,23 +150,269 @@ router.delete('/users/:id', asyncHandler(async (req, res) => {
     res.json({ message: 'User deleted successfully' });
 }));
 
-// Get user statistics
+// Get comprehensive dashboard statistics
 router.get('/stats', asyncHandler(async (req, res) => {
-    const [totalUsers, verifiedUsers, adminUsers, totalAccounts, totalTransactions] = await Promise.all([
+    const [
+        totalUsers, verifiedUsers, adminUsers, totalAccounts, totalTransactions,
+        totalBalance, totalDeposits, totalWithdrawals, pendingTransactions, todayTransactions
+    ] = await Promise.all([
         query('SELECT COUNT(*) as count FROM users'),
         query('SELECT COUNT(*) as count FROM users WHERE is_verified = TRUE'),
         query('SELECT COUNT(*) as count FROM users WHERE is_admin = TRUE'),
         query('SELECT COUNT(*) as count FROM accounts'),
         query('SELECT COUNT(*) as count FROM transactions'),
+        query('SELECT COALESCE(SUM(balance), 0) as total FROM accounts'),
+        query("SELECT COALESCE(SUM(amount), 0) as total FROM transactions WHERE type = 'credit'"),
+        query("SELECT COALESCE(SUM(amount), 0) as total FROM transactions WHERE type = 'debit'"),
+        query("SELECT COUNT(*) as count FROM transactions WHERE status = 'pending'"),
+        query("SELECT COUNT(*) as count FROM transactions WHERE DATE(created_at) = CURRENT_DATE"),
     ]);
     
     res.json({
-        totalUsers: parseInt(totalUsers.rows[0].count),
-        verifiedUsers: parseInt(verifiedUsers.rows[0].count),
-        adminUsers: parseInt(adminUsers.rows[0].count),
-        totalAccounts: parseInt(totalAccounts.rows[0].count),
-        totalTransactions: parseInt(totalTransactions.rows[0].count),
+        users: {
+            total: parseInt(totalUsers.rows[0].count),
+            verified: parseInt(verifiedUsers.rows[0].count),
+            admins: parseInt(adminUsers.rows[0].count),
+        },
+        accounts: {
+            total: parseInt(totalAccounts.rows[0].count),
+            totalBalance: parseFloat(totalBalance.rows[0].total || 0),
+        },
+        transactions: {
+            total: parseInt(totalTransactions.rows[0].count),
+            pending: parseInt(pendingTransactions.rows[0].count),
+            today: parseInt(todayTransactions.rows[0].count),
+            totalDeposits: parseFloat(totalDeposits.rows[0].total || 0),
+            totalWithdrawals: parseFloat(totalWithdrawals.rows[0].total || 0),
+        },
     });
+}));
+
+// Get all accounts with user info
+router.get('/accounts', asyncHandler(async (req, res) => {
+    const result = await query(`
+        SELECT 
+            a.id,
+            a.account_number,
+            a.type,
+            a.balance,
+            a.created_at,
+            a.updated_at,
+            u.id as user_id,
+            u.full_name,
+            u.email,
+            u.is_verified
+        FROM accounts a
+        JOIN users u ON a.user_id = u.id
+        ORDER BY a.created_at DESC
+    `);
+    
+    res.json(result.rows);
+}));
+
+// Get account by ID
+router.get('/accounts/:id', asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    
+    const result = await query(`
+        SELECT 
+            a.*,
+            u.full_name,
+            u.email
+        FROM accounts a
+        JOIN users u ON a.user_id = u.id
+        WHERE a.id = $1
+    `, [id]);
+    
+    if (result.rows.length === 0) {
+        throw new NotFoundError('Account not found');
+    }
+    
+    res.json(result.rows[0]);
+}));
+
+// Update account balance (admin adjustment)
+router.put('/accounts/:id/balance', asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const { balance, reason } = req.body;
+    
+    if (balance === undefined || balance < 0) {
+        throw new ValidationError('Valid balance is required');
+    }
+    
+    const accountCheck = await query('SELECT id, user_id FROM accounts WHERE id = $1', [id]);
+    if (accountCheck.rows.length === 0) {
+        throw new NotFoundError('Account not found');
+    }
+    
+    const oldBalance = await query('SELECT balance FROM accounts WHERE id = $1', [id]);
+    const oldBal = parseFloat(oldBalance.rows[0].balance);
+    const adjustment = parseFloat(balance) - oldBal;
+    
+    // Update balance
+    await query(
+        'UPDATE accounts SET balance = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2',
+        [balance, id]
+    );
+    
+    // Record adjustment transaction
+    await query(
+        `INSERT INTO transactions (user_id, type, amount, description, status, category)
+         VALUES ($1, $2, $3, $4, 'completed', 'admin_adjustment')`,
+        [
+            accountCheck.rows[0].user_id,
+            adjustment >= 0 ? 'credit' : 'debit',
+            Math.abs(adjustment),
+            reason || `Admin balance adjustment: ${adjustment >= 0 ? '+' : ''}${adjustment.toFixed(2)}`
+        ]
+    );
+    
+    res.json({ message: 'Account balance updated successfully' });
+}));
+
+// Get all transactions with filters
+router.get('/transactions', asyncHandler(async (req, res) => {
+    const { status, type, limit = 100, offset = 0, userId } = req.query;
+    
+    let queryStr = `
+        SELECT 
+            t.*,
+            u.full_name,
+            u.email,
+            a.account_number
+        FROM transactions t
+        JOIN users u ON t.user_id = u.id
+        LEFT JOIN accounts a ON a.user_id = u.id AND a.type = 'Checking'
+    `;
+    
+    const conditions = [];
+    const params = [];
+    let paramCount = 1;
+    
+    if (status) {
+        conditions.push(`t.status = $${paramCount++}`);
+        params.push(status);
+    }
+    
+    if (type) {
+        conditions.push(`t.type = $${paramCount++}`);
+        params.push(type);
+    }
+    
+    if (userId) {
+        conditions.push(`t.user_id = $${paramCount++}`);
+        params.push(userId);
+    }
+    
+    if (conditions.length > 0) {
+        queryStr += ' WHERE ' + conditions.join(' AND ');
+    }
+    
+    queryStr += ` ORDER BY t.created_at DESC LIMIT $${paramCount++} OFFSET $${paramCount++}`;
+    params.push(parseInt(limit), parseInt(offset));
+    
+    const result = await query(queryStr, params);
+    
+    const countResult = await query(
+        `SELECT COUNT(*) as count FROM transactions ${conditions.length > 0 ? 'WHERE ' + conditions.join(' AND ') : ''}`,
+        params.slice(0, -2)
+    );
+    
+    res.json({
+        transactions: result.rows,
+        pagination: {
+            total: parseInt(countResult.rows[0].count),
+            limit: parseInt(limit),
+            offset: parseInt(offset),
+        },
+    });
+}));
+
+// Update transaction status (approve/reject)
+router.put('/transactions/:id/status', asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const { status } = req.body;
+    
+    if (!['pending', 'completed', 'failed'].includes(status)) {
+        throw new ValidationError('Invalid status');
+    }
+    
+    const result = await query(
+        'UPDATE transactions SET status = $1 WHERE id = $2 RETURNING *',
+        [status, id]
+    );
+    
+    if (result.rows.length === 0) {
+        throw new NotFoundError('Transaction not found');
+    }
+    
+    res.json(result.rows[0]);
+}));
+
+// Refund transaction
+router.post('/transactions/:id/refund', asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const { reason } = req.body;
+    
+    const transaction = await query('SELECT * FROM transactions WHERE id = $1', [id]);
+    if (transaction.rows.length === 0) {
+        throw new NotFoundError('Transaction not found');
+    }
+    
+    const txn = transaction.rows[0];
+    
+    if (txn.status !== 'completed') {
+        throw new ValidationError('Can only refund completed transactions');
+    }
+    
+    await query('BEGIN');
+    
+    try {
+        // Get user's checking account
+        const account = await query(
+            "SELECT * FROM accounts WHERE user_id = $1 AND type = 'Checking' LIMIT 1",
+            [txn.user_id]
+        );
+        
+        if (account.rows.length === 0) {
+            await query('ROLLBACK');
+            throw new NotFoundError('User account not found');
+        }
+        
+        // Reverse the transaction
+        if (txn.type === 'debit') {
+            await query(
+                'UPDATE accounts SET balance = balance + $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2',
+                [txn.amount, account.rows[0].id]
+            );
+        } else {
+            await query(
+                'UPDATE accounts SET balance = balance - $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2',
+                [txn.amount, account.rows[0].id]
+            );
+        }
+        
+        // Mark original transaction as failed
+        await query('UPDATE transactions SET status = $1 WHERE id = $2', ['failed', id]);
+        
+        // Create refund transaction
+        await query(
+            `INSERT INTO transactions (user_id, type, amount, description, status, category)
+             VALUES ($1, $2, $3, $4, 'completed', 'refund')`,
+            [
+                txn.user_id,
+                txn.type === 'debit' ? 'credit' : 'debit',
+                txn.amount,
+                reason || `Refund for transaction #${id}`
+            ]
+        );
+        
+        await query('COMMIT');
+        res.json({ message: 'Refund processed successfully' });
+    } catch (err) {
+        await query('ROLLBACK');
+        throw err;
+    }
 }));
 
 export default router;
