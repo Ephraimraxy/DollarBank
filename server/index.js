@@ -14,6 +14,7 @@ import chatRoutes from './routes/chat.js';
 import transactionRoutes from './routes/transactions.js';
 import accountsRoutes from './routes/accounts.js';
 import adminRoutes from './routes/admin.js';
+import profileRoutes from './routes/profile.js';
 
 // Security middleware
 import {
@@ -129,6 +130,10 @@ app.use('/api/chat', chatRoutes);
 app.use('/api/transactions', transactionRoutes);
 app.use('/api/accounts', accountsRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/profile', profileRoutes);
+
+// Serve uploaded profile pictures
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // Serve static files from the React app
 app.use(express.static(path.join(__dirname, '../dist'), {

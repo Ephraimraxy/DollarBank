@@ -36,6 +36,26 @@ export const api = {
     getAccounts: () => api.request('/accounts'),
     getTransactions: () => api.request('/transactions'),
     transfer: (data: { amount: number; recipientEmail: string }) => api.request('/transactions/transfer', 'POST', data),
+    getProfile: () => api.request('/profile'),
+    uploadProfilePicture: (file: File) => {
+        const formData = new FormData();
+        formData.append('picture', file);
+        const token = localStorage.getItem('vault_token');
+        return fetch('/api/profile/picture', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+            },
+            body: formData,
+        }).then(async (res) => {
+            if (!res.ok) {
+                const error = await res.json();
+                throw new Error(error.error || 'Upload failed');
+            }
+            return res.json();
+        });
+    },
+    deleteProfilePicture: () => api.request('/profile/picture', 'DELETE'),
     
     // Admin APIs
     admin: {

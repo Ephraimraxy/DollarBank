@@ -1,12 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   ArrowLeft, Camera, User, Mail, Phone, LogOut, 
   ChevronRight, Shield, Bell, CheckCircle2, 
-  Globe, Moon, ShieldCheck, Save, X, Upload
+  Globe, Moon, ShieldCheck, Save, X, Upload, Loader2
 } from 'lucide-react';
+import { api } from '../src/lib/api';
 
 interface Props {
-  user: { fullName: string; email: string; phone: string; address: string; isAdmin?: boolean; is_admin?: boolean };
+  user: { fullName: string; email: string; phone: string; address: string; isAdmin?: boolean; is_admin?: boolean; profilePictureUrl?: string };
   setUser: (user: any) => void;
   onBack: () => void;
   darkMode: boolean;
@@ -19,6 +20,92 @@ export default function Profile({ user, setUser, onBack, darkMode, setDarkMode, 
   const isAdmin = user.isAdmin || user.is_admin;
   const [isEditing, setIsEditing] = useState(false);
   const [tempUser, setTempUser] = useState({ ...user });
+  const [profilePictureUrl, setProfilePictureUrl] = useState<string | null>(user.profilePictureUrl || null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    // Fetch profile data including picture URL
+    const fetchProfile = async () => {
+      try {
+        const profileData = await api.getProfile();
+        if (profileData.profile_picture_url) {
+          setProfilePictureUrl(profileData.profile_picture_url);
+          setUser({ ...user, profilePictureUrl: profileData.profile_picture_url });
+        }
+      } catch (err) {
+        console.error('Failed to fetch profile', err);
+      }
+    };
+    fetchProfile();
+  }, []);
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      alert('Please select an image file');
+      return;
+    }
+
+    // Validate file size (5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      alert('File size must be less than 5MB');
+      return;
+    }
+
+    // Create preview
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setPreviewUrl(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleUpload = async () => {
+    const file = fileInputRef.current?.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    try {
+      const result = await api.uploadProfilePicture(file);
+      setProfilePictureUrl(result.profilePictureUrl);
+      setUser({ ...user, profilePictureUrl: result.profilePictureUrl });
+      setPreviewUrl(null);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    } catch (err: any) {
+      alert(err.message || 'Failed to upload picture');
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleDeletePicture = async () => {
+    if (!confirm('Are you sure you want to delete your profile picture?')) return;
+
+    try {
+      await api.deleteProfilePicture();
+      setProfilePictureUrl(null);
+      setUser({ ...user, profilePictureUrl: undefined });
+      setPreviewUrl(null);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    } catch (err: any) {
+      alert(err.message || 'Failed to delete picture');
+    }
+  };
+
+  const getProfilePictureUrl = () => {
+    if (previewUrl) return previewUrl;
+    if (profilePictureUrl) return profilePictureUrl;
+    return `https://ui-avatars.com/api/?name=${encodeURIComponent(user.fullName)}&size=120&background=dc2626&color=fff&bold=true`;
+  };
 
   const handleSave = () => {
     setUser({ ...tempUser });
@@ -52,9 +139,78 @@ export default function Profile({ user, setUser, onBack, darkMode, setDarkMode, 
         {/* Avatar */}
         <div className="flex flex-col items-center pt-4">
           <div className="relative">
-            <img src="https://picsum.photos/120/120" alt="Avatar" className={`w-24 h-24 rounded-[32px] border-4 shadow-xl ${darkMode ? 'border-gray-800' : 'border-white'}`} />
-            <button className="absolute -bottom-2 -right-2 bg-red-600 text-white p-2.5 rounded-2xl shadow-lg hover:bg-red-700 transition-all active:scale-95"><Camera size={16} /></button>
+            <img 
+              src={getProfilePictureUrl()} 
+              alt="Profile" 
+              className={`w-24 h-24 rounded-[32px] border-4 shadow-xl object-cover ${darkMode ? 'border-gray-800' : 'border-white'}`}
+              onError={(e) => {
+                // Fallback to avatar service if image fails to load
+                (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.fullName)}&size=120&background=dc2626&color=fff&bold=true`;
+              }}
+            />
+            <input
+              type="file"
+              ref={fileInputRef}
+              accept="image/*"
+              onChange={handleFileSelect}
+              className="hidden"
+            />
+            <button 
+              onClick={() => fileInputRef.current?.click()}
+              className="absolute -bottom-2 -right-2 bg-red-600 text-white p-2.5 rounded-2xl shadow-lg hover:bg-red-700 transition-all active:scale-95"
+            >
+              <Camera size={16} />
+            </button>
+            {profilePictureUrl && (
+              <button
+                onClick={handleDeletePicture}
+                className="absolute -top-2 -right-2 bg-gray-600 text-white p-1.5 rounded-full shadow-lg hover:bg-gray-700 transition-all active:scale-95"
+                title="Delete picture"
+              >
+                <X size={12} />
+              </button>
+            )}
           </div>
+          
+          {previewUrl && (
+            <div className="mt-4 space-y-2 w-full max-w-xs">
+              <div className={`${darkMode ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-200'} rounded-xl p-3 border`}>
+                <p className="text-[9px] font-black text-gray-500 uppercase mb-2">Preview</p>
+                <img src={previewUrl} alt="Preview" className="w-full h-32 object-cover rounded-lg mb-2" />
+                <div className="flex gap-2">
+                  <button
+                    onClick={handleUpload}
+                    disabled={isUploading}
+                    className="flex-1 bg-red-600 text-white py-2 rounded-lg text-[9px] font-black uppercase disabled:opacity-50 flex items-center justify-center gap-1"
+                  >
+                    {isUploading ? (
+                      <>
+                        <Loader2 size={12} className="animate-spin" />
+                        Uploading...
+                      </>
+                    ) : (
+                      <>
+                        <Upload size={12} />
+                        Upload
+                      </>
+                    )}
+                  </button>
+                  <button
+                    onClick={() => {
+                      setPreviewUrl(null);
+                      if (fileInputRef.current) {
+                        fileInputRef.current.value = '';
+                      }
+                    }}
+                    className="px-4 bg-gray-600 text-white py-2 rounded-lg text-[9px] font-black uppercase"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+          
           <h2 className="text-xl font-black tracking-tight mt-6">{user.fullName}</h2>
           <p className="text-[9px] font-black uppercase tracking-[0.2em] text-gray-500 mt-1">Platinum Member Since 2021</p>
         </div>
