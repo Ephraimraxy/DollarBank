@@ -139,7 +139,12 @@ router.delete('/users/:id', asyncHandler(async (req, res) => {
         throw new NotFoundError('User not found');
     }
     
-    // Delete user (CASCADE will delete related accounts and transactions)
+    // Delete related data first (in case CASCADE isn't working)
+    // Delete transactions
+    await query('DELETE FROM transactions WHERE user_id = $1', [id]);
+    // Delete accounts
+    await query('DELETE FROM accounts WHERE user_id = $1', [id]);
+    // Delete user
     await query('DELETE FROM users WHERE id = $1', [id]);
     
     res.json({ message: 'User deleted successfully' });

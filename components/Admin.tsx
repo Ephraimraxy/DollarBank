@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ViewState } from '../types';
 import { api } from '../src/lib/api';
-import { ArrowLeft, Edit2, Trash2, Save, X, Shield, Users, CheckCircle, XCircle, Eye, EyeOff, TrendingUp, CreditCard, FileText } from 'lucide-react';
+import { ArrowLeft, Edit2, Trash2, Save, X, Shield, Users, CheckCircle, XCircle, Eye, EyeOff, TrendingUp, CreditCard, FileText, AlertTriangle } from 'lucide-react';
 
 interface Props {
   onBack: () => void;
@@ -29,6 +29,7 @@ export default function Admin({ onBack, darkMode, user }: Props) {
   const [newPassword, setNewPassword] = useState('');
   const [error, setError] = useState('');
   const [info, setInfo] = useState('');
+  const [deleteConfirm, setDeleteConfirm] = useState<User | null>(null);
 
   useEffect(() => {
     loadData();
@@ -94,17 +95,22 @@ export default function Admin({ onBack, darkMode, user }: Props) {
     }
   };
 
-  const handleDelete = async (userId: number) => {
-    if (!confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
-      return;
-    }
+  const handleDeleteClick = (user: User) => {
+    setDeleteConfirm(user);
+    setError('');
+  };
 
+  const handleDeleteConfirm = async () => {
+    if (!deleteConfirm) return;
+
+    const userId = deleteConfirm.id;
     setError('');
     setIsLoading(true);
     try {
       await api.admin.deleteUser(userId);
       setUsers(users.filter(u => u.id !== userId));
       setInfo('User deleted successfully');
+      setDeleteConfirm(null);
       setTimeout(() => setInfo(''), 2000);
     } catch (err: any) {
       setError(err.message || 'Failed to delete user');
@@ -112,6 +118,11 @@ export default function Admin({ onBack, darkMode, user }: Props) {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleDeleteCancel = () => {
+    setDeleteConfirm(null);
+    setError('');
   };
 
   const handlePasswordUpdate = async (userId: number) => {
@@ -303,7 +314,7 @@ export default function Admin({ onBack, darkMode, user }: Props) {
                     </button>
                     {u.id !== user.id && (
                       <button
-                        onClick={() => handleDelete(u.id)}
+                        onClick={() => handleDeleteClick(u)}
                         className={`p-1.5 rounded-lg ${darkMode ? 'hover:bg-gray-800' : 'hover:bg-gray-100'}`}
                       >
                         <Trash2 size={14} className="text-red-600" />
@@ -348,6 +359,66 @@ export default function Admin({ onBack, darkMode, user }: Props) {
           </div>
         ))}
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {deleteConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className={`w-full max-w-sm rounded-2xl shadow-2xl ${darkMode ? 'bg-gray-900 border border-gray-800' : 'bg-white border border-gray-200'}`}>
+            <div className="p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-12 h-12 rounded-full bg-red-600/20 flex items-center justify-center">
+                  <AlertTriangle size={24} className="text-red-600" />
+                </div>
+                <div>
+                  <h3 className={`text-lg font-black ${darkMode ? 'text-white' : 'text-gray-900'}`}>Delete User</h3>
+                  <p className="text-xs text-gray-500">This action cannot be undone</p>
+                </div>
+              </div>
+
+              <div className={`p-4 rounded-xl mb-4 ${darkMode ? 'bg-gray-800' : 'bg-red-50'}`}>
+                <p className={`text-sm font-bold mb-1 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                  {deleteConfirm.full_name}
+                </p>
+                <p className="text-xs text-gray-500">{deleteConfirm.email}</p>
+              </div>
+
+              <p className={`text-xs mb-6 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                This will permanently delete the user account, all associated accounts, and transaction history. This action cannot be reversed.
+              </p>
+
+              <div className="flex gap-2">
+                <button
+                  onClick={handleDeleteCancel}
+                  className={`flex-1 py-3 rounded-xl font-black uppercase tracking-widest text-[10px] transition-all ${
+                    darkMode
+                      ? 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleDeleteConfirm}
+                  disabled={isLoading}
+                  className="flex-1 bg-red-600 text-white py-3 rounded-xl font-black uppercase tracking-widest text-[10px] hover:bg-red-700 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  {isLoading ? (
+                    <>
+                      <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      Deleting...
+                    </>
+                  ) : (
+                    <>
+                      <Trash2 size={12} />
+                      Delete User
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
