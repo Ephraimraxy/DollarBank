@@ -20,21 +20,13 @@ export const validate = (validations) => {
     };
 };
 
-// Password validation helper
-const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
-
+// Password validation helper - relaxed for better UX
 export const validatePassword = (field = 'password') => {
     return body(field)
-        .isLength({ min: 8 })
-        .withMessage('Password must be at least 8 characters long')
-        .matches(/[a-z]/)
-        .withMessage('Password must contain at least one lowercase letter')
-        .matches(/[A-Z]/)
-        .withMessage('Password must contain at least one uppercase letter')
-        .matches(/\d/)
-        .withMessage('Password must contain at least one number')
-        .matches(/[@$!%*?&]/)
-        .withMessage('Password must contain at least one special character (@$!%*?&)');
+        .isLength({ min: 6 })
+        .withMessage('Password must be at least 6 characters long')
+        .notEmpty()
+        .withMessage('Password is required');
 };
 
 // Common validation rules

@@ -19,7 +19,12 @@ export const api = {
 
         if (!res.ok) {
             const error = await res.json();
-            throw new Error(error.error || 'API Request Failed');
+            const errorObj: any = new Error(error.error || 'API Request Failed');
+            // Preserve validation errors array if present
+            if (error.errors) {
+                errorObj.errors = error.errors;
+            }
+            throw errorObj;
         }
 
         return res.json();

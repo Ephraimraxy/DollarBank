@@ -53,8 +53,14 @@ export default function AuthFlow({ currentView, setView, onLogin, darkMode, setD
       setUser(normalizedUser); // Update App state
       onLogin();
     } catch (err: any) {
-      setError(err.message || 'Authentication Failed');
-      setTimeout(() => setError(''), 3000);
+      // Handle validation errors with detailed messages
+      if (err.errors && Array.isArray(err.errors)) {
+        const errorMessages = err.errors.map((e: any) => e.message || `${e.field}: ${e.message}`).join(', ');
+        setError(errorMessages || err.message || 'Validation failed');
+      } else {
+        setError(err.message || 'Authentication Failed');
+      }
+      setTimeout(() => setError(''), 5000);
     } finally {
       setIsLoading(false);
     }
