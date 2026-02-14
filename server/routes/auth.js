@@ -102,7 +102,7 @@ router.post('/verify-otp', authLimiter, asyncHandler(async (req, res) => {
     
     // Mark user as verified and clear OTP
     await query(
-        'UPDATE users SET is_verified = TRUE, otp_code = NULL, otp_expiry = NULL WHERE id = $1',
+        'UPDATE users SET is_verified = TRUE, otp_code = NULL, otp_expiry = NULL, updated_at = CURRENT_TIMESTAMP WHERE id = $1',
         [user.id]
     );
 
@@ -138,7 +138,7 @@ router.post('/resend-otp', authLimiter, validate(passwordResetValidation), async
     const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
     const otpExpiry = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
-    await query('UPDATE users SET otp_code = $1, otp_expiry = $2 WHERE id = $3', [otpCode, otpExpiry, user.id]);
+    await query('UPDATE users SET otp_code = $1, otp_expiry = $2, updated_at = CURRENT_TIMESTAMP WHERE id = $3', [otpCode, otpExpiry, user.id]);
 
     sendOTPEmail(email, otpCode).catch(err => {
         console.error('Failed to send OTP email:', err);
@@ -151,7 +151,7 @@ router.post('/verify-email', validate(verifyEmailValidation), asyncHandler(async
     const { token } = req.body;
 
     const result = await query(
-        'UPDATE users SET is_verified = TRUE, verification_token = NULL WHERE verification_token = $1 RETURNING *',
+        'UPDATE users SET is_verified = TRUE, verification_token = NULL, updated_at = CURRENT_TIMESTAMP WHERE verification_token = $1 RETURNING *',
         [token]
     );
     
@@ -176,7 +176,7 @@ router.post('/resend-verification', authLimiter, validate(passwordResetValidatio
     }
 
     const verificationToken = crypto.randomBytes(32).toString('hex');
-    await query('UPDATE users SET verification_token = $1 WHERE id = $2', [verificationToken, user.id]);
+    await query('UPDATE users SET verification_token = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2', [verificationToken, user.id]);
 
     sendVerificationEmail(email, verificationToken).catch(err => {
         console.error('Failed to send verification email:', err);
@@ -198,7 +198,7 @@ router.post('/forgot-password', passwordResetLimiter, validate(passwordResetVali
     const resetToken = crypto.randomBytes(32).toString('hex');
     const expiry = new Date(Date.now() + 3600000); // 1 hour
 
-    await query('UPDATE users SET reset_token = $1, reset_token_expiry = $2 WHERE email = $3', [resetToken, expiry, email]);
+    await query('UPDATE users SET reset_token = $1, reset_token_expiry = $2, updated_at = CURRENT_TIMESTAMP WHERE email = $3', [resetToken, expiry, email]);
     
     sendPasswordResetEmail(email, resetToken).catch(err => {
         console.error('Failed to send password reset email:', err);
@@ -217,7 +217,7 @@ router.post('/reset-password', passwordResetLimiter, validate(resetPasswordValid
 
     const hashedPassword = await bcrypt.hash(newPassword, 10);
     await query(
-        'UPDATE users SET password_hash = $1, reset_token = NULL, reset_token_expiry = NULL WHERE id = $2',
+        'UPDATE users SET password_hash = $1, reset_token = NULL, reset_token_expiry = NULL, updated_at = CURRENT_TIMESTAMP WHERE id = $2',
         [hashedPassword, user.rows[0].id]
     );
 
