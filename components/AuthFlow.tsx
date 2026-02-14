@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { ViewState } from '../types';
 import { Lock, User, ArrowLeft, ShieldCheck, RefreshCw, AlertTriangle, Eye, EyeOff, ChevronRight, Mail, Globe, Sun, Moon } from 'lucide-react';
+import { checkPasswordStrength, PasswordStrength } from '../src/lib/passwordStrength';
+import { api } from '../src/lib/api';
 
 interface Props {
   currentView: ViewState;
@@ -11,8 +13,6 @@ interface Props {
   setUser: (user: any) => void;
 }
 
-import { api } from '../src/lib/api';
-
 export default function AuthFlow({ currentView, setView, onLogin, darkMode, setDarkMode, setUser }: Props) {
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState('test@gmail.com');
@@ -21,6 +21,9 @@ export default function AuthFlow({ currentView, setView, onLogin, darkMode, setD
   const [error, setError] = useState('');
   const [info, setInfo] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+
+  // Calculate password strength
+  const passwordStrength = useMemo(() => checkPasswordStrength(password), [password]);
 
   const handleAuth = async (isRegister: boolean) => {
     setError('');
@@ -126,7 +129,21 @@ export default function AuthFlow({ currentView, setView, onLogin, darkMode, setD
       <div className="space-y-5">
         <AuthInput icon={<User size={18} />} label="Legal Full Name" type="text" value={fullName} onChange={setFullName} darkMode={darkMode} />
         <AuthInput icon={<Mail size={18} />} label="Secure Email" type="email" value={email} onChange={setEmail} darkMode={darkMode} />
-        <AuthInput icon={<Lock size={18} />} label="Vault Passphrase" type="password" value={password} onChange={setPassword} darkMode={darkMode} />
+        <div>
+          <AuthInput 
+            icon={<Lock size={18} />} 
+            label="Vault Passphrase" 
+            type={showPassword ? "text" : "password"} 
+            value={password} 
+            onChange={setPassword} 
+            showToggle 
+            onToggle={() => setShowPassword(!showPassword)} 
+            darkMode={darkMode} 
+          />
+          {password && (
+            <PasswordStrengthIndicator strength={passwordStrength} darkMode={darkMode} />
+          )}
+        </div>
       </div>
 
       <div className="mt-4 h-4">
@@ -267,6 +284,67 @@ export default function AuthFlow({ currentView, setView, onLogin, darkMode, setD
     </div>
   );
 }
+
+const PasswordStrengthIndicator = ({ strength, darkMode }: { strength: any; darkMode: boolean }) => {
+  const getStrengthColor = () => {
+    switch (strength.strength) {
+      case 'weak':
+        return darkMode ? 'bg-red-500/20 border-red-500/50 text-red-400' : 'bg-red-50 border-red-200 text-red-600';
+      case 'medium':
+        return darkMode ? 'bg-yellow-500/20 border-yellow-500/50 text-yellow-400' : 'bg-yellow-50 border-yellow-200 text-yellow-600';
+      case 'strong':
+        return darkMode ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-400' : 'bg-emerald-50 border-emerald-200 text-emerald-600';
+      default:
+        return darkMode ? 'bg-gray-500/20 border-gray-500/50' : 'bg-gray-50 border-gray-200';
+    }
+  };
+
+  const getStrengthLabel = () => {
+    switch (strength.strength) {
+      case 'weak':
+        return 'Weak';
+      case 'medium':
+        return 'Medium';
+      case 'strong':
+        return 'Strong';
+      default:
+        return '';
+    }
+  };
+
+  return (
+    <div className="mt-2 space-y-2">
+      {/* Strength Bar */}
+      <div className="flex items-center gap-2">
+        <div className={`flex-1 h-1.5 rounded-full overflow-hidden ${darkMode ? 'bg-gray-800' : 'bg-gray-200'}`}>
+          <div
+            className={`h-full transition-all duration-300 ${
+              strength.strength === 'weak' ? 'bg-red-500' :
+              strength.strength === 'medium' ? 'bg-yellow-500' :
+              'bg-emerald-500'
+            }`}
+            style={{ width: `${strength.score}%` }}
+          />
+        </div>
+        <span className={`text-[9px] font-black uppercase tracking-widest ${getStrengthColor()}`}>
+          {getStrengthLabel()}
+        </span>
+      </div>
+
+      {/* Feedback Messages */}
+      {strength.feedback.length > 0 && (
+        <div className={`text-[8px] space-y-0.5 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+          {strength.feedback.slice(0, 3).map((msg: string, idx: number) => (
+            <div key={idx} className="flex items-center gap-1">
+              <span className="text-red-500">•</span>
+              <span>{msg}</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
 
 const AuthInput = ({ icon, label, type, value, onChange, showToggle, onToggle, darkMode }: any) => (
   <div className="relative group">
