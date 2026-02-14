@@ -13,6 +13,7 @@ import authRoutes from './routes/auth.js';
 import chatRoutes from './routes/chat.js';
 import transactionRoutes from './routes/transactions.js';
 import accountsRoutes from './routes/accounts.js';
+import adminRoutes from './routes/admin.js';
 
 // Security middleware
 import {
@@ -127,6 +128,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/transactions', transactionRoutes);
 app.use('/api/accounts', accountsRoutes);
+app.use('/api/admin', adminRoutes);
 
 // Serve static files from the React app
 app.use(express.static(path.join(__dirname, '../dist'), {

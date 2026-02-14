@@ -6,15 +6,17 @@ import {
 } from 'lucide-react';
 
 interface Props {
-  user: { fullName: string; email: string; phone: string; address: string };
+  user: { fullName: string; email: string; phone: string; address: string; isAdmin?: boolean; is_admin?: boolean };
   setUser: (user: any) => void;
   onBack: () => void;
   darkMode: boolean;
   setDarkMode: (value: boolean) => void;
   onLogout?: () => void;
+  onAdmin?: () => void;
 }
 
-export default function Profile({ user, setUser, onBack, darkMode, setDarkMode, onLogout }: Props) {
+export default function Profile({ user, setUser, onBack, darkMode, setDarkMode, onLogout, onAdmin }: Props) {
+  const isAdmin = user.isAdmin || user.is_admin;
   const [isEditing, setIsEditing] = useState(false);
   const [tempUser, setTempUser] = useState({ ...user });
 
@@ -84,6 +86,25 @@ export default function Profile({ user, setUser, onBack, darkMode, setDarkMode, 
             <EditableItem icon={<Phone size={18} />} label="Mobile" value={isEditing ? tempUser.phone : user.phone} isEditing={isEditing} onChange={(v: string) => setTempUser({ ...tempUser, phone: v })} darkMode={darkMode} />
           </div>
         </div>
+
+        {/* Admin Panel Access */}
+        {isAdmin && onAdmin && (
+          <button
+            onClick={onAdmin}
+            className={`w-full ${darkMode ? 'bg-red-600/20 border-red-500/30' : 'bg-red-50 border-red-100'} border-2 rounded-[32px] p-4 flex items-center justify-between hover:bg-red-600/30 transition-all active:scale-95`}
+          >
+            <div className="flex items-center gap-3">
+              <div className={`w-10 h-10 ${darkMode ? 'bg-red-600/20' : 'bg-red-100'} rounded-xl flex items-center justify-center`}>
+                <Shield className="text-red-600" size={18} />
+              </div>
+              <div className="text-left">
+                <div className="font-black text-sm tracking-tight">Admin Panel</div>
+                <div className="text-[9px] font-black text-gray-500 uppercase tracking-widest mt-0.5">Manage Users</div>
+              </div>
+            </div>
+            <ChevronRight className="text-red-600" size={18} />
+          </button>
+        )}
 
         {/* Preferences */}
         <div className={`${darkMode ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-100'} rounded-[32px] shadow-sm border overflow-hidden`}>

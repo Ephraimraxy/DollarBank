@@ -8,6 +8,7 @@ import Support from './components/Support';
 import Cards from './components/Cards';
 import Activity from './components/Activity';
 import Profile from './components/Profile';
+import Admin from './components/Admin';
 import RequestMoney from './components/RequestMoney';
 import Invest from './components/Invest';
 import AiAssistant from './components/AiAssistant';
@@ -179,7 +180,9 @@ export default function App() {
       case ViewState.ACTIVITY:
         return <Activity onBack={() => setCurrentView(ViewState.HOME)} darkMode={darkMode} />;
       case ViewState.PROFILE:
-        return <Profile user={user} setUser={setUser} onBack={() => setCurrentView(ViewState.HOME)} darkMode={darkMode} setDarkMode={setDarkMode} onLogout={handleLogout} />;
+        return <Profile user={user} setUser={setUser} onBack={() => setCurrentView(ViewState.HOME)} darkMode={darkMode} setDarkMode={setDarkMode} onLogout={handleLogout} onAdmin={() => setCurrentView(ViewState.ADMIN)} />;
+      case ViewState.ADMIN:
+        return <Admin onBack={() => setCurrentView(ViewState.PROFILE)} darkMode={darkMode} user={user} />;
       case ViewState.REQUEST:
         return <RequestMoney onBack={() => setCurrentView(ViewState.HOME)} darkMode={darkMode} />;
       case ViewState.SUPPORT:

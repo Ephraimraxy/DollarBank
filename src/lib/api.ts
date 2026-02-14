@@ -36,4 +36,14 @@ export const api = {
     getAccounts: () => api.request('/accounts'),
     getTransactions: () => api.request('/transactions'),
     transfer: (data: { amount: number; recipientEmail: string }) => api.request('/transactions/transfer', 'POST', data),
+    
+    // Admin APIs
+    admin: {
+        getUsers: () => api.request('/admin/users'),
+        getUser: (id: number) => api.request(`/admin/users/${id}`),
+        updateUser: (id: number, data: any) => api.request(`/admin/users/${id}`, 'PUT', data),
+        updateUserPassword: (id: number, newPassword: string) => api.request(`/admin/users/${id}/password`, 'PUT', { newPassword }),
+        deleteUser: (id: number) => api.request(`/admin/users/${id}`, 'DELETE'),
+        getStats: () => api.request('/admin/stats'),
+    },
 };

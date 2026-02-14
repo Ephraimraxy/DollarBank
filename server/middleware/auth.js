@@ -1,4 +1,5 @@
 import jwt from 'jsonwebtoken';
+import { AuthorizationError } from '../utils/errors.js';
 
 export const authenticateToken = (req, res, next) => {
     const authHeader = req.headers['authorization'];
@@ -12,4 +13,11 @@ export const authenticateToken = (req, res, next) => {
         req.user = user;
         next();
     });
+};
+
+export const requireAdmin = (req, res, next) => {
+    if (!req.user || !req.user.isAdmin) {
+        throw new AuthorizationError('Admin access required');
+    }
+    next();
 };

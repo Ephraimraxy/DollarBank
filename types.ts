@@ -17,7 +17,8 @@ export enum ViewState {
   PROFILE = 'PROFILE',
   REQUEST = 'REQUEST',
   SUPPORT = 'SUPPORT',
-  LIVE_CHAT = 'LIVE_CHAT'
+  LIVE_CHAT = 'LIVE_CHAT',
+  ADMIN = 'ADMIN'
 }
 
 export interface Transaction {
