@@ -197,7 +197,7 @@ router.get('/accounts', asyncHandler(async (req, res) => {
             a.type,
             a.balance,
             a.created_at,
-            a.updated_at,
+            COALESCE(a.updated_at, a.created_at) as updated_at,
             u.id as user_id,
             u.full_name,
             u.email,

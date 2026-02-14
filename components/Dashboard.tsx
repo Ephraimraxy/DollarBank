@@ -13,19 +13,30 @@ export default function Dashboard({ user, onViewChange, darkMode }: Props) {
   const [showBalance, setShowBalance] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
   const [accounts, setAccounts] = useState<any[]>([]);
+  const [pendingTransactions, setPendingTransactions] = useState<any[]>([]);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const data = await api.getAccounts();
-        if (Array.isArray(data)) {
-          setAccounts(data);
+        const [accountsData, transactionsData] = await Promise.all([
+          api.getAccounts(),
+          api.getTransactions(),
+        ]);
+        
+        if (Array.isArray(accountsData)) {
+          setAccounts(accountsData);
         } else {
-          console.error('API returned non-array for accounts:', data);
+          console.error('API returned non-array for accounts:', accountsData);
           setAccounts([]);
         }
+
+        const transactions = transactionsData.transactions || transactionsData || [];
+        const pending = transactions.filter((tx: any) => tx.status === 'pending');
+        setPendingTransactions(pending);
       } catch (err) {
-        console.error('Failed to fetch accounts', err);
+        console.error('Failed to fetch data', err);
+        setAccounts([]);
+        setPendingTransactions([]);
       } finally {
         setIsLoading(false);
       }
@@ -128,19 +139,23 @@ export default function Dashboard({ user, onViewChange, darkMode }: Props) {
         </div>
       </div>
 
-      {/* Quick Alert */}
-      <div className="px-4 mb-2">
-        <div onClick={() => onViewChange(ViewState.FEE_PAYMENT)} className={`border-2 p-3 rounded-xl flex items-center gap-3 cursor-pointer active:scale-95 transition-all ${darkMode ? 'bg-red-500/5 border-red-500/20' : 'bg-red-50 border-red-100 hover:bg-red-100'}`}>
-          <div className={`p-1.5 rounded-lg ${darkMode ? 'bg-red-500/20 text-red-500' : 'bg-red-100 text-red-600'}`}>
-            <ShieldCheck size={16} />
+      {/* Quick Alert - Only show if there are pending transactions */}
+      {pendingTransactions.length > 0 && (
+        <div className="px-4 mb-2">
+          <div onClick={() => onViewChange(ViewState.ACTIVITY)} className={`border-2 p-3 rounded-xl flex items-center gap-3 cursor-pointer active:scale-95 transition-all ${darkMode ? 'bg-red-500/5 border-red-500/20' : 'bg-red-50 border-red-100 hover:bg-red-100'}`}>
+            <div className={`p-1.5 rounded-lg ${darkMode ? 'bg-red-500/20 text-red-500' : 'bg-red-100 text-red-600'}`}>
+              <ShieldCheck size={16} />
+            </div>
+            <div className="flex-1">
+              <h4 className={`text-[10px] font-black uppercase tracking-widest ${darkMode ? 'text-red-400' : 'text-red-700'}`}>Action Required</h4>
+              <p className="text-[9px] font-bold text-gray-500">
+                {pendingTransactions.length} Pending {pendingTransactions.length === 1 ? 'Transaction' : 'Transactions'}
+              </p>
+            </div>
+            <ChevronRight className="text-red-400 opacity-50" size={14} />
           </div>
-          <div className="flex-1">
-            <h4 className={`text-[10px] font-black uppercase tracking-widest ${darkMode ? 'text-red-400' : 'text-red-700'}`}>Action Required</h4>
-            <p className="text-[9px] font-bold text-gray-500">1 Pending Wire Transfer Fee Resolution</p>
-          </div>
-          <ChevronRight className="text-red-400 opacity-50" size={14} />
         </div>
-      </div>
+      )}
 
       {/* Accounts */}
       <div className="px-4 space-y-2">

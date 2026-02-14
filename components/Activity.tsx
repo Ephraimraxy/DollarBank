@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Search, Download, Share2, CheckCircle, Clock, X, ArrowUpRight, ArrowDownLeft, Calendar } from 'lucide-react';
+import { api } from '../src/lib/api';
 
 interface Props {
   onBack: () => void;
@@ -11,6 +12,7 @@ interface Transaction {
   name: string;
   amount: number;
   date: string;
+  dateObj?: Date; // For filtering
   time: string;
   type: 'credit' | 'debit';
   status: 'Success' | 'Pending' | 'Failed';
@@ -22,26 +24,73 @@ interface Transaction {
 type TypeFilter = 'ALL' | 'IN' | 'OUT';
 type DateFilter = 'ALL' | 'WEEK' | 'MONTH' | 'YEAR';
 
+interface ApiTransaction {
+  id: number;
+  type: 'credit' | 'debit';
+  amount: number;
+  description: string;
+  category: string;
+  recipient_name?: string;
+  reference?: string;
+  status: 'completed' | 'pending' | 'failed';
+  created_at: string;
+}
+
 export default function Activity({ onBack, darkMode }: Props) {
   const [selectedTx, setSelectedTx] = useState<Transaction | null>(null);
   const [typeFilter, setTypeFilter] = useState<TypeFilter>('ALL');
   const [dateFilter, setDateFilter] = useState<DateFilter>('ALL');
   const [searchTerm, setSearchTerm] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+  const [apiTransactions, setApiTransactions] = useState<ApiTransaction[]>([]);
 
   useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 1200);
-    return () => clearTimeout(timer);
+    const fetchTransactions = async () => {
+      try {
+        const data = await api.getTransactions();
+        const transactions = data.transactions || data || [];
+        setApiTransactions(transactions);
+      } catch (err) {
+        console.error('Failed to fetch transactions', err);
+        setApiTransactions([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchTransactions();
   }, []);
 
-  const transactions: Transaction[] = [
-    { id: 'TX982374', name: 'Netflix Subscription', amount: -14.99, date: 'Today', time: '9:41 AM', type: 'debit', status: 'Success', icon: 'N', reference: 'REF-NET-9928', category: 'Entertainment' },
-    { id: 'TX982373', name: 'Salary Deposit', amount: 4250.00, date: 'Yesterday', time: '4:30 PM', type: 'credit', status: 'Success', icon: 'S', reference: 'REF-SAL-2938', category: 'Income' },
-    { id: 'TX982372', name: 'Walmart Supercenter', amount: -142.80, date: 'Oct 24, 2023', time: '12:20 PM', type: 'debit', status: 'Success', icon: 'W', reference: 'REF-WAL-9921', category: 'Groceries' },
-    { id: 'TX982371', name: 'Transfer to Savings', amount: -500.00, date: 'Oct 22, 2023', time: '10:00 AM', type: 'debit', status: 'Success', icon: 'T', reference: 'REF-TRF-1122', category: 'Transfer' },
-    { id: 'TX982370', name: 'Shell Station', amount: -45.00, date: 'Oct 20, 2023', time: '6:15 PM', type: 'debit', status: 'Success', icon: 'S', reference: 'REF-GAS-4432', category: 'Transport' },
-    { id: 'TX982369', name: 'Wire Transfer Fee', amount: -330.00, date: 'Oct 19, 2023', time: '2:15 PM', type: 'debit', status: 'Pending', icon: 'F', reference: 'REF-FEE-8872', category: 'Fees' },
-  ];
+  // Convert API transactions to display format
+  const transactions: Transaction[] = apiTransactions.map((tx) => {
+    const txDate = new Date(tx.created_at);
+    const now = new Date();
+    const diffMs = now.getTime() - txDate.getTime();
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    
+    let dateStr = '';
+    if (diffDays === 0) dateStr = 'Today';
+    else if (diffDays === 1) dateStr = 'Yesterday';
+    else dateStr = txDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    
+    const timeStr = txDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+    
+    const name = tx.recipient_name || tx.description || 'Transaction';
+    const firstLetter = name.charAt(0).toUpperCase();
+    
+    return {
+      id: `TX${tx.id}`,
+      name,
+      amount: tx.type === 'credit' ? tx.amount : -tx.amount,
+      date: dateStr,
+      dateObj: txDate, // Store actual date for filtering
+      time: timeStr,
+      type: tx.type,
+      status: tx.status === 'completed' ? 'Success' : tx.status === 'pending' ? 'Pending' : 'Failed',
+      icon: firstLetter,
+      reference: tx.reference || `REF-${tx.id}`,
+      category: tx.category || 'Other',
+    };
+  });
 
   const filteredTransactions = transactions.filter(tx => {
     const searchLower = searchTerm.toLowerCase();
@@ -54,10 +103,19 @@ export default function Activity({ onBack, darkMode }: Props) {
       (typeFilter === 'IN' ? tx.type === 'credit' : tx.type === 'debit');
 
     let matchesDate = true;
-    if (dateFilter === 'WEEK') {
-      matchesDate = tx.date === 'Today' || tx.date === 'Yesterday';
-    } else if (dateFilter === 'MONTH') {
-      matchesDate = tx.date === 'Today' || tx.date === 'Yesterday' || tx.date.includes('Oct');
+    if (dateFilter !== 'ALL' && tx.dateObj) {
+      const txDate = tx.dateObj;
+      const now = new Date();
+      if (dateFilter === 'WEEK') {
+        const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        matchesDate = txDate >= weekAgo;
+      } else if (dateFilter === 'MONTH') {
+        const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+        matchesDate = txDate >= monthAgo;
+      } else if (dateFilter === 'YEAR') {
+        const yearAgo = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
+        matchesDate = txDate >= yearAgo;
+      }
     }
 
     return matchesSearch && matchesType && matchesDate;

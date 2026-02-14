@@ -295,3 +295,4 @@ For deployment issues, check:
 - System logs: `journalctl -u vault-id`
 - Nginx logs: `/var/log/nginx/`
 
+
