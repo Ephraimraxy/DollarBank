@@ -1,7 +1,8 @@
 import React, { useState, useMemo } from 'react';
-import { ArrowLeft, User, Search, Check, ChevronRight, Calendar, Info, Trash2, Edit2, Plus, AlertCircle, X, Clock, ShieldCheck, Repeat, ArrowRight } from 'lucide-react';
-
+import { ArrowLeft, User, Search, Check, ChevronRight, Calendar, Info, Trash2, Edit2, Plus, AlertCircle, X, Clock, ShieldCheck, Repeat, ArrowRight, Loader2 } from 'lucide-react';
 import { api } from '../src/lib/api';
+import SensitiveOperationGuard from './SensitiveOperationGuard';
+import { useNetworkStatus } from '../src/hooks/useNetworkStatus';
 
 interface Recipient {
   id: number;
@@ -24,6 +25,7 @@ export default function TransferFlow({ onBack, darkMode }: Props) {
   const [selectedRecipient, setSelectedRecipient] = useState<Recipient | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const network = useNetworkStatus();
 
   // Recurring Transfer State
   const [isRecurring, setIsRecurring] = useState(false);
@@ -76,6 +78,14 @@ export default function TransferFlow({ onBack, darkMode }: Props) {
   const handleFinalConfirm = async () => {
     setShowScheduleConfirm(false);
     setIsLoading(true);
+    
+    // Show network-aware loading message
+    const loadingMessage = network.speed === 'slow' 
+      ? 'Processing with slow connection...' 
+      : network.quality === 'fair'
+      ? 'Processing...'
+      : 'Sending...';
+    
     try {
       if (!selectedRecipient) throw new Error("No recipient selected");
 
@@ -87,11 +97,14 @@ export default function TransferFlow({ onBack, darkMode }: Props) {
         });
       } else {
         // Mock success for recurring as backend doesn't support it yet
-        await new Promise(r => setTimeout(r, 1000));
+        await new Promise(r => setTimeout(r, network.speed === 'slow' ? 2000 : 1000));
       }
       setStep('SUCCESS');
     } catch (err: any) {
-      alert(err.message || "Transfer Failed");
+      const errorMsg = network.quality === 'poor' || network.quality === 'offline'
+        ? "Transfer failed. Please check your connection and try again."
+        : err.message || "Transfer Failed";
+      alert(errorMsg);
     } finally {
       setIsLoading(false);
     }
@@ -331,14 +344,39 @@ export default function TransferFlow({ onBack, darkMode }: Props) {
       </div>
 
       <div className="mt-6">
-        <button
-          onClick={handleTransferClick}
-          disabled={isLoading}
-          className="w-full bg-red-600 text-white font-black uppercase tracking-widest py-4 rounded-2xl shadow-lg hover:bg-red-700 transition-all active:scale-95 flex items-center justify-center gap-2 shadow-red-900/20 text-xs"
+        {network.quality === 'offline' && (
+          <div className={`mb-3 p-3 rounded-xl border-2 ${
+            darkMode ? 'bg-red-500/10 border-red-500/30' : 'bg-red-50 border-red-200'
+          }`}>
+            <div className="flex items-center gap-2">
+              <AlertCircle size={16} className="text-red-600" />
+              <p className="text-[9px] font-black text-red-600 uppercase">No Internet Connection</p>
+            </div>
+            <p className="text-[8px] text-gray-500 mt-1">Please check your connection to proceed.</p>
+          </div>
+        )}
+        <SensitiveOperationGuard
+          darkMode={darkMode}
+          operation="Money transfer"
+          onProceed={handleTransferClick}
         >
-          {isRecurring ? 'Setup Schedule' : 'Confirm & Send Money'}
-          <ArrowRight size={16} />
-        </button>
+          <button
+            disabled={isLoading || network.quality === 'offline'}
+            className="w-full bg-red-600 text-white font-black uppercase tracking-widest py-4 rounded-2xl shadow-lg hover:bg-red-700 transition-all active:scale-95 flex items-center justify-center gap-2 shadow-red-900/20 text-xs disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isLoading ? (
+              <>
+                <Loader2 size={16} className="animate-spin" />
+                {network.speed === 'slow' ? 'Processing...' : 'Sending...'}
+              </>
+            ) : (
+              <>
+                {isRecurring ? 'Setup Schedule' : 'Confirm & Send Money'}
+                <ArrowRight size={16} />
+              </>
+            )}
+          </button>
+        </SensitiveOperationGuard>
       </div>
     </div>
   );

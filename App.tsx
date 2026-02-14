@@ -17,6 +17,8 @@ import AuthFlow from './components/AuthFlow';
 import VerifyEmail from './components/VerifyEmail';
 import VerifyOTP from './components/VerifyOTP';
 import ResetPassword from './components/ResetPassword';
+import NetworkIndicator from './components/NetworkIndicator';
+import NetworkWarning from './components/NetworkWarning';
 import { ViewState } from './types';
 import { ErrorBoundary } from './components/ErrorBoundary';
 
@@ -100,6 +102,8 @@ export default function App() {
       </div>
 
       <div className="flex items-center space-x-1">
+        <NetworkIndicator darkMode={darkMode} />
+        
         <button
           onClick={() => setCurrentView(ViewState.NOTIFICATIONS)}
           className={`relative p-1.5 rounded-lg transition-all active:scale-90 ${darkMode ? 'hover:bg-gray-800' : 'hover:bg-gray-100'}`}
@@ -209,6 +213,7 @@ export default function App() {
     <ErrorBoundary>
       <div className={`max-w-md mx-auto h-[100dvh] flex flex-col overflow-hidden shadow-2xl relative transition-colors duration-300 ${darkMode ? 'bg-gray-950' : 'bg-gray-50'}`}>
         {!isAuthView && <Header />}
+        {!isAuthView && <NetworkWarning darkMode={darkMode} />}
 
         <main className="flex-1 overflow-y-auto no-scrollbar pb-16">
           {renderContent()}
