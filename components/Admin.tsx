@@ -404,18 +404,32 @@ export default function Admin({ onBack, darkMode, user }: Props) {
           />
         )}
         {activeTab === 'transactions' && (
-          <TransactionsTab
-            transactions={filteredTransactions}
-            filters={transactionFilters}
-            setFilters={setTransactionFilters}
-            selectedTransaction={selectedTransaction}
-            setSelectedTransaction={setSelectedTransaction}
-            searchQuery={searchQuery}
-            setSearchQuery={setSearchQuery}
-            onStatusUpdate={handleUpdateTransactionStatus}
-            onRefund={handleRefundTransaction}
-            darkMode={darkMode}
-          />
+          <>
+            <TransactionsTab
+              transactions={filteredTransactions}
+              filters={transactionFilters}
+              setFilters={setTransactionFilters}
+              selectedTransaction={selectedTransaction}
+              setSelectedTransaction={setSelectedTransaction}
+              searchQuery={searchQuery}
+              setSearchQuery={setSearchQuery}
+              onStatusUpdate={handleUpdateTransactionStatus}
+              onRefund={handleRefundTransaction}
+              darkMode={darkMode}
+            />
+            {selectedTransaction && (
+              <TransactionDetailModal
+                transaction={selectedTransaction}
+                onClose={() => setSelectedTransaction(null)}
+                onStatusUpdate={handleUpdateTransactionStatus}
+                onRefund={(reason) => {
+                  handleRefundTransaction(selectedTransaction.id, reason);
+                  setSelectedTransaction(null);
+                }}
+                darkMode={darkMode}
+              />
+            )}
+          </>
         )}
         {activeTab === 'analytics' && <AnalyticsTab stats={stats} transactions={transactions} darkMode={darkMode} />}
       </div>
@@ -778,52 +792,56 @@ const TransactionsTab = ({
         </div>
       </div>
 
-      {transactions.map((txn: Transaction) => (
-        <div
-          key={txn.id}
-          onClick={() => setSelectedTransaction(txn)}
-          className={`rounded-xl p-3 cursor-pointer ${darkMode ? 'bg-gray-900 border border-gray-800 hover:border-gray-700' : 'bg-white border border-gray-200 hover:border-gray-300'} transition-colors`}
-        >
-          <div className="flex items-start justify-between">
-            <div className="flex-1">
-              <div className="flex items-center gap-2 mb-1">
-                {txn.type === 'credit' ? (
-                  <ArrowDownLeft size={14} className="text-emerald-600" />
-                ) : (
-                  <ArrowUpRight size={14} className="text-red-600" />
-                )}
-                <p className="text-sm font-black">{formatCurrency(txn.amount)}</p>
-                <span className={`px-1.5 py-0.5 rounded text-[8px] font-black uppercase ${
-                  txn.status === 'completed' ? 'bg-emerald-500/20 text-emerald-500' :
-                  txn.status === 'pending' ? 'bg-yellow-500/20 text-yellow-500' :
-                  'bg-red-500/20 text-red-500'
-                }`}>
-                  {txn.status}
-                </span>
+      {transactions.length === 0 ? (
+        <div className="text-center py-8 text-gray-500 text-xs">No transactions found</div>
+      ) : (
+        transactions.map((txn: Transaction) => (
+          <div
+            key={txn.id}
+            onClick={() => setSelectedTransaction(txn)}
+            className={`rounded-xl p-3 cursor-pointer ${darkMode ? 'bg-gray-900 border border-gray-800 hover:border-gray-700' : 'bg-white border border-gray-200 hover:border-gray-300'} transition-colors`}
+          >
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-1">
+                  {txn.type === 'credit' ? (
+                    <ArrowDownLeft size={14} className="text-emerald-600" />
+                  ) : (
+                    <ArrowUpRight size={14} className="text-red-600" />
+                  )}
+                  <p className="text-sm font-black">{formatCurrency(txn.amount)}</p>
+                  <span className={`px-1.5 py-0.5 rounded text-[8px] font-black uppercase ${
+                    txn.status === 'completed' ? 'bg-emerald-500/20 text-emerald-500' :
+                    txn.status === 'pending' ? 'bg-yellow-500/20 text-yellow-500' :
+                    'bg-red-500/20 text-red-500'
+                  }`}>
+                    {txn.status}
+                  </span>
+                </div>
+                <p className="text-[10px] text-gray-500">{txn.description}</p>
+                <p className="text-[9px] text-gray-400 mt-1">{txn.full_name} • {new Date(txn.created_at).toLocaleString()}</p>
+                {txn.reference && <p className="text-[8px] text-gray-400">Ref: {txn.reference}</p>}
               </div>
-              <p className="text-[10px] text-gray-500">{txn.description}</p>
-              <p className="text-[9px] text-gray-400 mt-1">{txn.full_name} • {new Date(txn.created_at).toLocaleString()}</p>
-              {txn.reference && <p className="text-[8px] text-gray-400">Ref: {txn.reference}</p>}
+              {txn.status === 'pending' && (
+                <div className="flex gap-1">
+                  <button
+                    onClick={(e) => { e.stopPropagation(); onStatusUpdate(txn.id, 'completed'); }}
+                    className="p-1.5 rounded-lg bg-emerald-600 text-white"
+                  >
+                    <CheckCircle2 size={12} />
+                  </button>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); onStatusUpdate(txn.id, 'failed'); }}
+                    className="p-1.5 rounded-lg bg-red-600 text-white"
+                  >
+                    <X size={12} />
+                  </button>
+                </div>
+              )}
             </div>
-            {txn.status === 'pending' && (
-              <div className="flex gap-1">
-                <button
-                  onClick={(e) => { e.stopPropagation(); onStatusUpdate(txn.id, 'completed'); }}
-                  className="p-1.5 rounded-lg bg-emerald-600 text-white"
-                >
-                  <CheckCircle2 size={12} />
-                </button>
-                <button
-                  onClick={(e) => { e.stopPropagation(); onStatusUpdate(txn.id, 'failed'); }}
-                  className="p-1.5 rounded-lg bg-red-600 text-white"
-                >
-                  <X size={12} />
-                </button>
-              </div>
-            )}
           </div>
-        </div>
-      ))}
+        ))
+      )}
     </div>
   );
 };
@@ -849,6 +867,103 @@ const AnalyticsTab = ({ stats, transactions, darkMode }: any) => {
                 : formatCurrency(0)}
             </span>
           </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Transaction Detail Modal
+const TransactionDetailModal = ({ transaction, onClose, onStatusUpdate, onRefund, darkMode }: any) => {
+  const [refundReason, setRefundReason] = useState('');
+  const formatCurrency = (amount: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+      <div className={`w-full max-w-sm rounded-2xl shadow-2xl ${darkMode ? 'bg-gray-900 border border-gray-800' : 'bg-white border border-gray-200'}`}>
+        <div className="p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className={`text-lg font-black ${darkMode ? 'text-white' : 'text-gray-900'}`}>Transaction Details</h3>
+            <button onClick={onClose} className={`p-1 rounded-lg ${darkMode ? 'hover:bg-gray-800' : 'hover:bg-gray-100'}`}>
+              <X size={18} />
+            </button>
+          </div>
+
+          <div className="space-y-3 mb-4">
+            <div className="flex justify-between">
+              <span className="text-[10px] text-gray-500">Amount</span>
+              <span className={`text-lg font-black ${transaction.type === 'credit' ? 'text-emerald-600' : 'text-red-600'}`}>
+                {transaction.type === 'credit' ? '+' : '-'}{formatCurrency(transaction.amount)}
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-[10px] text-gray-500">Status</span>
+              <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase ${
+                transaction.status === 'completed' ? 'bg-emerald-500/20 text-emerald-500' :
+                transaction.status === 'pending' ? 'bg-yellow-500/20 text-yellow-500' :
+                'bg-red-500/20 text-red-500'
+              }`}>
+                {transaction.status}
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-[10px] text-gray-500">Type</span>
+              <span className="text-xs font-bold uppercase">{transaction.type}</span>
+            </div>
+            <div>
+              <span className="text-[10px] text-gray-500">Description</span>
+              <p className="text-xs font-bold mt-1">{transaction.description}</p>
+            </div>
+            <div>
+              <span className="text-[10px] text-gray-500">User</span>
+              <p className="text-xs font-bold mt-1">{transaction.full_name} ({transaction.email})</p>
+            </div>
+            <div>
+              <span className="text-[10px] text-gray-500">Date</span>
+              <p className="text-xs font-bold mt-1">{new Date(transaction.created_at).toLocaleString()}</p>
+            </div>
+            {transaction.reference && (
+              <div>
+                <span className="text-[10px] text-gray-500">Reference</span>
+                <p className="text-xs font-bold mt-1">{transaction.reference}</p>
+              </div>
+            )}
+          </div>
+
+          {transaction.status === 'pending' && (
+            <div className="flex gap-2 mb-4">
+              <button
+                onClick={() => { onStatusUpdate(transaction.id, 'completed'); onClose(); }}
+                className="flex-1 bg-emerald-600 text-white py-2 rounded-lg text-[9px] font-black uppercase"
+              >
+                Approve
+              </button>
+              <button
+                onClick={() => { onStatusUpdate(transaction.id, 'failed'); onClose(); }}
+                className="flex-1 bg-red-600 text-white py-2 rounded-lg text-[9px] font-black uppercase"
+              >
+                Reject
+              </button>
+            </div>
+          )}
+
+          {transaction.status === 'completed' && transaction.type === 'debit' && (
+            <div className="space-y-2">
+              <input
+                type="text"
+                placeholder="Refund reason (optional)"
+                value={refundReason}
+                onChange={(e) => setRefundReason(e.target.value)}
+                className={`w-full px-3 py-2 rounded-lg text-xs ${darkMode ? 'bg-gray-800 text-white border-gray-700' : 'bg-gray-50 text-gray-900 border-gray-200'} border`}
+              />
+              <button
+                onClick={() => onRefund(refundReason || 'Admin refund')}
+                className="w-full bg-orange-600 text-white py-2 rounded-lg text-[9px] font-black uppercase"
+              >
+                Process Refund
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>
