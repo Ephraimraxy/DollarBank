@@ -2,10 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { ViewState } from '../types';
 import { api } from '../src/lib/api';
 import { 
-  ArrowLeft, Edit2, Trash2, Save, X, Shield, Users, CheckCircle, XCircle, 
-  AlertTriangle, TrendingUp, CreditCard, FileText, DollarSign, Activity,
-  Search, Filter, RefreshCw, Eye, Lock, Unlock, ArrowUpRight, ArrowDownLeft,
-  Calendar, BarChart3, PieChart, AlertCircle, Clock, CheckCircle2
+  ArrowLeft, Edit2, Trash2, Check, X, ShieldCheck, User, CheckCircle,  
+  AlertTriangle, TrendingUp, CreditCard, FileText,  
+  Search,  RefreshCw, Eye, Lock, Unlock, ArrowUpRight, ArrowDownLeft,
+  Calendar,  PieChart, AlertCircle, Clock, CheckCircle2
 } from 'lucide-react';
 
 interface Props {
@@ -68,6 +68,10 @@ export default function Admin({ onBack, darkMode, user }: Props) {
   const [showPasswordForm, setShowPasswordForm] = useState<number | null>(null);
   const [newPassword, setNewPassword] = useState('');
   const [deleteConfirm, setDeleteConfirm] = useState<User | null>(null);
+  
+  const [isCreatingUser, setIsCreatingUser] = useState(false);
+  const [createUserForm, setCreateUserForm] = useState({ fullName: '', email: '', password: '', isAdmin: false, isVerified: true });
+
   
   // Account management
   const [editingAccount, setEditingAccount] = useState<Account | null>(null);
@@ -154,6 +158,23 @@ export default function Admin({ onBack, darkMode, user }: Props) {
       setTransactions(transactionsData.transactions || transactionsData || []);
     } catch (err: any) {
       setError(err.message || 'Failed to load transactions');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleCreateUser = async () => {
+    setError('');
+    setIsLoading(true);
+    try {
+      const newUser = await api.admin.createUser(createUserForm);
+      setUsers([newUser, ...users]);
+      setInfo('User created successfully. Starting balance of $900,000 assigned.');
+      setIsCreatingUser(false);
+      setCreateUserForm({ fullName: '', email: '', password: '', isAdmin: false, isVerified: true });
+      setTimeout(() => setInfo(''), 4000);
+    } catch (err: any) {
+      setError(err.message || 'Failed to create user');
     } finally {
       setIsLoading(false);
     }
@@ -316,7 +337,7 @@ export default function Admin({ onBack, darkMode, user }: Props) {
             <ArrowLeft className="w-6 h-6" />
           </button>
           <div className="flex items-center gap-2">
-            <Shield className="w-5 h-5 text-red-600" />
+            <ShieldCheck className="w-5 h-5 text-red-600" />
             <h1 className="text-sm font-black uppercase tracking-widest">Admin Control Center</h1>
           </div>
         </div>
@@ -348,8 +369,8 @@ export default function Admin({ onBack, darkMode, user }: Props) {
                 : darkMode ? 'text-gray-400 hover:text-white' : 'text-gray-500 hover:text-gray-900'
             }`}
           >
-            {tab === 'dashboard' && <BarChart3 size={12} className="inline mr-1" />}
-            {tab === 'users' && <Users size={12} className="inline mr-1" />}
+            {tab === 'dashboard' && <PieChart size={12} className="inline mr-1" />}
+            {tab === 'users' && <User size={12} className="inline mr-1" />}
             {tab === 'accounts' && <CreditCard size={12} className="inline mr-1" />}
             {tab === 'transactions' && <FileText size={12} className="inline mr-1" />}
             {tab === 'analytics' && <PieChart size={12} className="inline mr-1" />}
@@ -387,6 +408,11 @@ export default function Admin({ onBack, darkMode, user }: Props) {
             onPasswordUpdate={handlePasswordUpdate}
             darkMode={darkMode}
             currentUserId={user.id}
+            isCreatingUser={isCreatingUser}
+            setIsCreatingUser={setIsCreatingUser}
+            createUserForm={createUserForm}
+            setCreateUserForm={setCreateUserForm}
+            onCreateUser={handleCreateUser}
           />
         )}
         {activeTab === 'accounts' && (
@@ -463,13 +489,13 @@ const DashboardTab = ({ stats, darkMode, isLoading }: any) => {
       {/* Key Metrics */}
       <div className="grid grid-cols-2 gap-2">
         <MetricCard
-          icon={<DollarSign className="text-emerald-600" size={20} />}
+          icon={<CreditCard className="text-emerald-600" size={20} />}
           label="Total Assets"
           value={formatCurrency(stats.accounts?.totalBalance || 0)}
           darkMode={darkMode}
         />
         <MetricCard
-          icon={<Users className="text-blue-600" size={20} />}
+          icon={<User className="text-blue-600" size={20} />}
           label="Active Users"
           value={stats.users?.total || 0}
           darkMode={darkMode}
@@ -481,7 +507,7 @@ const DashboardTab = ({ stats, darkMode, isLoading }: any) => {
           darkMode={darkMode}
         />
         <MetricCard
-          icon={<Activity className="text-orange-600" size={20} />}
+          icon={<Clock className="text-orange-600" size={20} />}
           label="Today's Transactions"
           value={stats.transactions?.today || 0}
           darkMode={darkMode}
@@ -558,20 +584,76 @@ const MetricCard = ({ icon, label, value, darkMode }: any) => (
 const UsersTab = ({
   users, editingUser, editForm, setEditForm, showPasswordForm, setShowPasswordForm,
   newPassword, setNewPassword, deleteConfirm, searchQuery, setSearchQuery,
-  onEdit, onSave, onCancel, onDeleteClick, onPasswordUpdate, darkMode, currentUserId
+  onEdit, onCheck, onCancel, onDeleteClick, onPasswordUpdate, darkMode, currentUserId,
+  isCreatingUser, setIsCreatingUser, createUserForm, setCreateUserForm, onCreateUser
 }: any) => (
   <div className="py-4 space-y-3">
-    {/* Search */}
-    <div className="relative">
-      <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
-      <input
-        type="text"
-        placeholder="Search users..."
-        value={searchQuery}
-        onChange={(e) => setSearchQuery(e.target.value)}
-        className={`w-full pl-9 pr-3 py-2 rounded-lg text-xs ${darkMode ? 'bg-gray-900 border-gray-800 text-white' : 'bg-white border-gray-200 text-gray-900'} border`}
-      />
+    {/* Actions and Search */}
+    <div className="flex gap-2">
+      <div className="relative flex-1">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
+        <input
+          type="text"
+          placeholder="Search users..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className={`w-full pl-9 pr-3 py-2 rounded-lg text-xs ${darkMode ? 'bg-gray-900 border-gray-800 text-white' : 'bg-white border-gray-200 text-gray-900'} border`}
+        />
+      </div>
+      <button
+        onClick={() => setIsCreatingUser(!isCreatingUser)}
+        className="bg-red-600 text-white px-3 py-2 rounded-lg text-[10px] font-black uppercase whitespace-nowrap"
+      >
+        + New User
+      </button>
     </div>
+
+    {isCreatingUser && (
+      <div className={`rounded-xl p-3 ${darkMode ? 'bg-gray-900 border border-gray-800' : 'bg-white border border-gray-200'}`}>
+        <h3 className="text-xs font-black uppercase tracking-widest mb-3 text-gray-500">Create User</h3>
+        <div className="space-y-2">
+          <input
+            type="text"
+            value={createUserForm.fullName}
+            onChange={(e) => setCreateUserForm({ ...createUserForm, fullName: e.target.value })}
+            className={`w-full px-2 py-1.5 rounded-lg text-xs font-bold ${darkMode ? 'bg-gray-800 text-white border-gray-700' : 'bg-gray-50 text-gray-900 border-gray-200'} border`}
+            placeholder="Full Name"
+          />
+          <input
+            type="email"
+            value={createUserForm.email}
+            onChange={(e) => setCreateUserForm({ ...createUserForm, email: e.target.value })}
+            className={`w-full px-2 py-1.5 rounded-lg text-xs font-bold ${darkMode ? 'bg-gray-800 text-white border-gray-700' : 'bg-gray-50 text-gray-900 border-gray-200'} border`}
+            placeholder="Email"
+          />
+          <input
+            type="password"
+            value={createUserForm.password}
+            onChange={(e) => setCreateUserForm({ ...createUserForm, password: e.target.value })}
+            className={`w-full px-2 py-1.5 rounded-lg text-xs font-bold ${darkMode ? 'bg-gray-800 text-white border-gray-700' : 'bg-gray-50 text-gray-900 border-gray-200'} border`}
+            placeholder="Password (min 6 chars)"
+          />
+          <div className="flex gap-2 py-1">
+            <label className="flex items-center gap-1.5 text-[9px]">
+              <input type="checkbox" checked={createUserForm.isAdmin} onChange={(e) => setCreateUserForm({ ...createUserForm, isAdmin: e.target.checked })} className="w-3 h-3" />
+              <span className="font-black uppercase">Admin</span>
+            </label>
+            <label className="flex items-center gap-1.5 text-[9px]">
+              <input type="checkbox" checked={createUserForm.isVerified} onChange={(e) => setCreateUserForm({ ...createUserForm, isVerified: e.target.checked })} className="w-3 h-3" />
+              <span className="font-black uppercase">Verified</span>
+            </label>
+          </div>
+          <div className="flex gap-2 mt-2">
+            <button onClick={onCreateUser} className="flex-1 bg-red-600 text-white py-2 rounded-lg text-[9px] font-black uppercase shadow-sm">
+              Create User
+            </button>
+            <button onClick={() => setIsCreatingUser(false)} className="flex-1 bg-gray-600 text-white py-2 rounded-lg text-[9px] font-black uppercase">
+              Cancel
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
 
     {users.map((u: User) => (
       <div key={u.id} className={`rounded-xl p-3 ${darkMode ? 'bg-gray-900 border border-gray-800' : 'bg-white border border-gray-200'}`}>
@@ -603,7 +685,7 @@ const UsersTab = ({
             </div>
             <div className="flex gap-2">
               <button onClick={onSave} className="flex-1 bg-red-600 text-white py-2 rounded-lg text-[9px] font-black uppercase">
-                <Save size={12} className="inline mr-1" />
+                <Check size={12} className="inline mr-1" />
                 Save
               </button>
               <button onClick={onCancel} className="flex-1 bg-gray-600 text-white py-2 rounded-lg text-[9px] font-black uppercase">
@@ -618,8 +700,8 @@ const UsersTab = ({
               <div className="flex-1">
                 <div className="flex items-center gap-1.5 mb-1">
                   <p className="text-sm font-black">{u.full_name}</p>
-                  {u.is_admin && <Shield size={12} className="text-red-600" />}
-                  {u.is_verified ? <CheckCircle size={12} className="text-emerald-600" /> : <XCircle size={12} className="text-gray-400" />}
+                  {u.is_admin && <ShieldCheck size={12} className="text-red-600" />}
+                  {u.is_verified ? <CheckCircle size={12} className="text-emerald-600" /> : <X size={12} className="text-gray-400" />}
                 </div>
                 <p className="text-[10px] text-gray-500">{u.email}</p>
                 <p className="text-[8px] text-gray-400 mt-1">ID: {u.id} • Joined: {new Date(u.created_at).toLocaleDateString()}</p>
@@ -671,7 +753,7 @@ const UsersTab = ({
 // Accounts Tab Component
 const AccountsTab = ({
   accounts, editingAccount, balanceAdjustment, setBalanceAdjustment,
-  searchQuery, setSearchQuery, onEdit, onSave, onCancel, darkMode
+  searchQuery, setSearchQuery, onEdit, onCheck, onCancel, darkMode
 }: any) => {
   const formatCurrency = (amount: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
 
@@ -715,7 +797,7 @@ const AccountsTab = ({
               </div>
               <div className="flex gap-2">
                 <button onClick={onSave} className="flex-1 bg-red-600 text-white py-2 rounded-lg text-[9px] font-black uppercase">
-                  <Save size={12} className="inline mr-1" />
+                  <Check size={12} className="inline mr-1" />
                   Update Balance
                 </button>
                 <button onClick={onCancel} className="flex-1 bg-gray-600 text-white py-2 rounded-lg text-[9px] font-black uppercase">
@@ -730,7 +812,7 @@ const AccountsTab = ({
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1">
                     <p className="text-sm font-black">{acc.type} Account</p>
-                    {acc.is_verified ? <CheckCircle size={12} className="text-emerald-600" /> : <XCircle size={12} className="text-gray-400" />}
+                    {acc.is_verified ? <CheckCircle size={12} className="text-emerald-600" /> : <X size={12} className="text-gray-400" />}
                   </div>
                   <p className="text-[10px] text-gray-500">#{acc.account_number}</p>
                   <p className="text-lg font-black mt-1">{formatCurrency(acc.balance)}</p>

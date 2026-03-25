@@ -35,7 +35,7 @@ export const api = {
     chat: (messages: any[]) => api.request('/chat/stream', 'POST', { messages }),
     getAccounts: () => api.request('/accounts'),
     getTransactions: () => api.request('/transactions'),
-    transfer: (data: { amount: number; recipientEmail: string }) => api.request('/transactions/transfer', 'POST', data),
+    transfer: (data: { amount: number; recipientName: string; bankName: string }) => api.request('/transactions/transfer', 'POST', data),
     getProfile: () => api.request('/profile'),
     uploadProfilePicture: (file: File) => {
         const formData = new FormData();
@@ -60,6 +60,7 @@ export const api = {
     // Admin APIs
     admin: {
         getUsers: () => api.request('/admin/users'),
+        createUser: (data: any) => api.request('/admin/users', 'POST', data),
         getUser: (id: number) => api.request(`/admin/users/${id}`),
         updateUser: (id: number, data: any) => api.request(`/admin/users/${id}`, 'PUT', data),
         updateUserPassword: (id: number, newPassword: string) => api.request(`/admin/users/${id}/password`, 'PUT', { newPassword }),

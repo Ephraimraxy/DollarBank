@@ -95,10 +95,6 @@ export default function AuthFlow({ currentView, setView, onLogin, darkMode, setD
         <button onClick={() => handleAuth(false)} disabled={isLoading} className="w-full bg-red-600 text-white font-black uppercase tracking-[0.2em] py-3.5 rounded-xl shadow-xl hover:bg-red-700 active:scale-95 transition-all text-[10px] disabled:opacity-50">
           {isLoading ? 'Decrypting...' : 'Open Secure Vault'}
         </button>
-        <button onClick={() => setView(ViewState.SIGN_UP)} className={`w-full font-black uppercase tracking-widest py-3.5 rounded-xl border-2 text-[10px] transition-all ${darkMode ? 'border-gray-800 text-gray-400 hover:bg-gray-800' : 'border-gray-100 text-gray-500 hover:bg-gray-50'
-          }`}>
-          Create New Identity
-        </button>
       </div>
     </div>
   );

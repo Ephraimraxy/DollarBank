@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { ArrowLeft, User, Search, Check, ChevronRight, Calendar, Info, Trash2, Edit2, Plus, AlertCircle, X, Clock, ShieldCheck, Repeat, ArrowRight, Loader2 } from 'lucide-react';
+import { ArrowLeft, User, Search, Check, ChevronRight, Calendar, Info, Trash2, Edit2, Plus, AlertCircle, AlertTriangle, X, Clock, ShieldCheck, Repeat, ArrowRight, Loader2 } from 'lucide-react';
 import { api } from '../src/lib/api';
 import SensitiveOperationGuard from './SensitiveOperationGuard';
 import { useNetworkStatus } from '../src/hooks/useNetworkStatus';
@@ -22,9 +22,11 @@ type Step = 'AMOUNT' | 'RECIPIENT' | 'MANAGE_RECIPIENTS' | 'REVIEW' | 'SUCCESS';
 export default function TransferFlow({ onBack, darkMode }: Props) {
   const [step, setStep] = useState<Step>('AMOUNT');
   const [amount, setAmount] = useState<string>('');
-  const [selectedRecipient, setSelectedRecipient] = useState<Recipient | null>(null);
+  const [recipientName, setRecipientName] = useState('');
+  const [bankName, setBankName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [notificationStage, setNotificationStage] = useState(0); // 0: none, 1: Success, 2: URGENT Fee, 3: VAT Fee
+  const [reference] = useState(`TXN${Math.random().toString(16).slice(2, 10)}`);
   const network = useNetworkStatus();
 
   // Recurring Transfer State
@@ -41,20 +43,7 @@ export default function TransferFlow({ onBack, darkMode }: Props) {
     currentDailyUsed: 1200
   };
 
-  // Recipient Management State
-  const [recipients, setRecipients] = useState<Recipient[]>([
-    { id: 1, name: 'Sarah Wilson', bank: 'Chase Bank', account: '...4432', email: 'demo@gmail.com' },
-    { id: 2, name: 'Michael Chen', bank: 'Wells Fargo', account: '...9921', email: 'michael@example.com' },
-    { id: 3, name: 'Jessica Davis', bank: 'Bank of America', account: '...1123', email: 'jessica@example.com' },
-  ]);
 
-  const filteredRecipients = useMemo(() => {
-    return recipients.filter(r =>
-      r.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      r.bank.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      r.account.includes(searchTerm)
-    );
-  }, [recipients, searchTerm]);
 
   const validateTransfer = () => {
     const numAmount = parseFloat(amount);
@@ -70,8 +59,8 @@ export default function TransferFlow({ onBack, darkMode }: Props) {
     setStep('RECIPIENT');
   };
 
-  const handleRecipientSelect = (recipient: Recipient) => {
-    setSelectedRecipient(recipient);
+  const handleRecipientContinue = () => {
+    if (!recipientName.trim() || !bankName.trim()) return;
     setStep('REVIEW');
   };
 
@@ -87,19 +76,21 @@ export default function TransferFlow({ onBack, darkMode }: Props) {
       : 'Sending...';
     
     try {
-      if (!selectedRecipient) throw new Error("No recipient selected");
+      if (!recipientName || !bankName) throw new Error("Missing recipient details");
 
       // Simulating recurring logic on backend or ignoring for MVP
       if (!isRecurring) {
         await api.transfer({
           amount: parseFloat(amount),
-          recipientEmail: selectedRecipient.email
+          recipientName,
+          bankName
         });
       } else {
         // Mock success for recurring as backend doesn't support it yet
         await new Promise(r => setTimeout(r, network.speed === 'slow' ? 2000 : 1000));
       }
       setStep('SUCCESS');
+      setNotificationStage(1);
     } catch (err: any) {
       const errorMsg = network.quality === 'poor' || network.quality === 'offline'
         ? "Transfer failed. Please check your connection and try again."
@@ -322,8 +313,8 @@ export default function TransferFlow({ onBack, darkMode }: Props) {
             <div className="flex justify-between items-center">
               <span className="text-gray-400 text-[9px] font-black uppercase tracking-widest">Recipient</span>
               <div className="text-right">
-                <div className={`font-black text-sm ${darkMode ? 'text-gray-200' : 'text-gray-900'}`}>{selectedRecipient?.name}</div>
-                <div className="text-[10px] font-bold text-gray-400 uppercase tracking-tight">{selectedRecipient?.bank}</div>
+                <div className={`font-black text-sm ${darkMode ? 'text-gray-200' : 'text-gray-900'}`}>{recipientName}</div>
+                <div className="text-[10px] font-bold text-gray-400 uppercase tracking-tight">{bankName}</div>
               </div>
             </div>
 
@@ -381,68 +372,111 @@ export default function TransferFlow({ onBack, darkMode }: Props) {
     </div>
   );
 
-  const renderSuccessStep = () => (
-    <div className={`h-full flex flex-col items-center justify-center p-8 text-center relative transition-colors duration-300 ${darkMode ? 'bg-gray-950' : 'bg-white'}`}>
-      <div className="z-10 relative animate-in zoom-in-95 duration-500">
-        <div className={`w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner ${darkMode ? 'bg-green-900/30 text-green-400 border border-green-800' : 'bg-green-100 text-green-600'}`}>
-          {isRecurring ? <Repeat size={48} className="drop-shadow-sm" /> : <Check size={48} className="drop-shadow-sm" />}
-        </div>
-        <h2 className={`text-3xl font-black tracking-tighter mb-2 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-          {isRecurring ? 'Schedule Active' : 'Transfer Successful!'}
-        </h2>
-        <p className="text-gray-500 mb-8 max-w-[240px] mx-auto leading-relaxed text-sm font-medium">
-          {isRecurring
-            ? `Your automated ${frequency.toLowerCase()} transfer of $${parseFloat(amount).toFixed(2)} to ${selectedRecipient?.name} has been initiated.`
-            : `Sent $${parseFloat(amount).toFixed(2)} to ${selectedRecipient?.name} securely.`
-          }
-        </p>
+  const renderSuccessStep = () => {
+    const amt = parseFloat(amount);
+    const fee = amt * 0.10;
+    const vat = fee * 0.10;
+    const totalFee = fee + vat;
+    const formattedAmt = amt.toFixed(2);
+    const formattedFee = fee.toFixed(2);
+    const formattedVat = vat.toFixed(2);
+    const formattedTotalFee = totalFee.toFixed(2);
 
-        <div className="w-full max-w-xs mx-auto space-y-3">
-          <button
-            onClick={onBack}
-            className="w-full bg-red-600 text-white font-black uppercase tracking-widest py-4 rounded-2xl shadow-xl hover:bg-red-700 transition-all active:scale-95 shadow-red-900/20 text-xs"
-          >
-            Return to Dashboard
-          </button>
-        </div>
+    return (
+      <div className={`h-full flex flex-col items-center justify-center p-6 text-center relative transition-colors duration-300 ${darkMode ? 'bg-gray-950 text-white' : 'bg-white text-gray-900'}`}>
+        {notificationStage === 1 && (
+          <div className="animate-in zoom-in-95 duration-500 w-full max-w-sm">
+            <div className={`w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner ${darkMode ? 'bg-green-900/30 text-green-400 border border-green-800' : 'bg-green-100 text-green-600'}`}>
+              <Check size={40} className="drop-shadow-sm" />
+            </div>
+            <h2 className="text-2xl font-black tracking-tighter mb-4">Transfer Successful</h2>
+            <div className={`p-6 rounded-2xl mb-8 border ${darkMode ? 'bg-gray-900 border-gray-800' : 'bg-gray-50 border-gray-200'}`}>
+              <p className="font-bold text-sm mb-2 text-left">You sent ${formattedAmt} to {recipientName}.</p>
+              <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest text-left">Reference: {reference}</p>
+            </div>
+            <button onClick={() => setNotificationStage(2)} className="w-full bg-red-600 text-white font-black uppercase tracking-widest py-4 rounded-xl shadow-lg hover:bg-red-700 active:scale-95 text-xs">
+              Continue
+            </button>
+          </div>
+        )}
+
+        {notificationStage === 2 && (
+          <div className="animate-in slide-in-from-right-8 duration-500 w-full max-w-sm">
+            <div className={`w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner ${darkMode ? 'bg-red-900/30 text-red-500 border border-red-800' : 'bg-red-100 text-red-600'}`}>
+              <AlertCircle size={40} className="drop-shadow-sm" />
+            </div>
+            <h2 className="text-xl font-black tracking-tighter mb-4 text-red-500 uppercase">! URGENT: Wire Transfer Fee Required</h2>
+            <div className={`p-6 rounded-2xl mb-8 border ${darkMode ? 'bg-gray-900 border-gray-800' : 'bg-gray-50 border-gray-200'} text-left`}>
+              <p className="font-bold text-sm mb-4">COMPULSORY ACTION: Transaction Fee of ${formattedTotalFee} (10% fee + 10% VAT) was applied to your wire transfer of ${formattedAmt} to {recipientName}.</p>
+              <p className="font-black text-xs text-red-500 mb-4">IMPORTANT: This fee must be paid by the receiver to verify that the payment is going to the correct source.</p>
+              <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Reference: {reference}</p>
+              <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-1">9m ago</p>
+            </div>
+            <button onClick={() => setNotificationStage(3)} className="w-full bg-red-600 text-white font-black uppercase tracking-widest py-4 rounded-xl shadow-lg hover:bg-red-700 active:scale-95 text-xs flex justify-center gap-2 items-center">
+              Acknowledge & Continue <ChevronRight size={16} />
+            </button>
+          </div>
+        )}
+
+        {notificationStage === 3 && (
+          <div className="animate-in slide-in-from-right-8 duration-500 w-full max-w-sm">
+            <div className={`w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner ${darkMode ? 'bg-yellow-900/30 text-yellow-500 border border-yellow-800' : 'bg-yellow-100 text-yellow-600'}`}>
+              <AlertTriangle size={40} className="drop-shadow-sm" />
+            </div>
+            <h2 className="text-lg font-black tracking-tighter mb-4 text-yellow-500 uppercase">VAT Fee Payment Notice - COMPULSORY</h2>
+            <div className={`p-6 rounded-2xl mb-8 border ${darkMode ? 'bg-gray-900 border-gray-800' : 'bg-gray-50 border-gray-200'} text-left`}>
+              <p className="font-bold text-sm mb-4">MANDATORY: A VAT fee of ${formattedVat} (10%) has been added to your wire transfer fee of ${formattedFee}. Total fee: ${formattedTotalFee}.</p>
+              <p className="font-black text-xs text-yellow-600 mb-4">NOTE: The receiver must pay this fee to verify that the payment is going to the correct destination.</p>
+              <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Reference: {reference}</p>
+              <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-1">9m ago</p>
+            </div>
+            <button onClick={onBack} className="w-full bg-gray-600 text-white font-black uppercase tracking-widest py-4 rounded-xl shadow-lg hover:bg-gray-700 active:scale-95 text-xs">
+              Return to Dashboard
+            </button>
+          </div>
+        )}
       </div>
-    </div>
-  );
+    );
+  };
 
   const renderRecipientStep = () => (
-    <div className="pt-4 flex flex-col h-full">
-      <div className="px-4 mb-4">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
-          <input
-            type="text"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Search by name, bank, or account..."
-            className={`w-full border rounded-2xl py-3 pl-10 pr-10 text-sm font-medium focus:outline-none focus:border-red-500 shadow-sm transition-colors ${darkMode ? 'bg-gray-900 border-gray-800 text-white placeholder-gray-600' : 'bg-white border-gray-200 text-gray-900 placeholder-gray-400'}`}
-          />
+    <div className="flex flex-col h-full pt-6">
+      <div className="px-4 flex-1">
+        <h2 className={`text-2xl font-black tracking-tighter mb-6 ${darkMode ? 'text-white' : 'text-gray-900'}`}>Recipient Details</h2>
+        
+        <div className="space-y-6">
+          <div>
+            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block">Bank Name</label>
+            <input
+              type="text"
+              value={bankName}
+              onChange={(e) => setBankName(e.target.value)}
+              placeholder="e.g. Chase Bank"
+              className={`w-full text-sm font-bold p-4 rounded-xl outline-none border transition-colors ${darkMode ? 'bg-gray-900 border-gray-800 text-white' : 'bg-white border-gray-200 text-gray-900'}`}
+            />
+          </div>
+          
+          <div>
+            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block">Recipient Full Name</label>
+            <input
+              type="text"
+              value={recipientName}
+              onChange={(e) => setRecipientName(e.target.value)}
+              placeholder="e.g. Jayden Ruff"
+              className={`w-full text-sm font-bold p-4 rounded-xl outline-none border transition-colors ${darkMode ? 'bg-gray-900 border-gray-800 text-white' : 'bg-white border-gray-200 text-gray-900'}`}
+            />
+          </div>
         </div>
       </div>
 
-      <div className="flex-1 px-4 overflow-y-auto pb-6 no-scrollbar">
-        <div className="space-y-3">
-          {filteredRecipients.map(r => (
-            <button
-              key={r.id}
-              onClick={() => handleRecipientSelect(r)}
-              className={`${darkMode ? 'bg-gray-900 border-gray-800 hover:border-red-900' : 'bg-white border-gray-100 hover:border-red-500'} w-full p-4 rounded-2xl border shadow-sm flex items-center gap-4 transition-all active:scale-[0.98]`}
-            >
-              <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black text-lg shadow-inner ${darkMode ? 'bg-red-900/20 text-red-500' : 'bg-red-50 text-red-600'}`}>
-                {r.name.charAt(0)}
-              </div>
-              <div className="flex-1 text-left">
-                <div className={`font-black text-sm ${darkMode ? 'text-gray-200' : 'text-gray-900'}`}>{r.name}</div>
-                <div className="text-[10px] font-bold text-gray-400 uppercase tracking-tight">{r.bank} • {r.account}</div>
-              </div>
-              <ChevronRight size={18} className="text-gray-300" />
-            </button>
-          ))}
-        </div>
+      <div className={`mt-auto p-4 border-t transition-colors duration-300 ${darkMode ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-100'}`}>
+        <button
+          onClick={handleRecipientContinue}
+          disabled={!recipientName.trim() || !bankName.trim()}
+          className="w-full bg-red-600 text-white font-black uppercase tracking-widest py-4 rounded-2xl shadow-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-red-700 transition-all active:scale-95 text-xs"
+        >
+          Review Transfer
+        </button>
       </div>
     </div>
   );

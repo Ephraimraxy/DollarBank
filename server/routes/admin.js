@@ -30,6 +30,56 @@ router.get('/users', asyncHandler(async (req, res) => {
     res.json(result.rows);
 }));
 
+// Create new user with default 900k balance
+router.post('/users', asyncHandler(async (req, res) => {
+    const { fullName, email, password, isAdmin, isVerified } = req.body;
+    
+    if (!fullName || fullName.trim().length < 2) {
+        throw new ValidationError('Full name must be at least 2 characters');
+    }
+    
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        throw new ValidationError('Valid email is required');
+    }
+    
+    if (!password || password.length < 6) {
+        throw new ValidationError('Password must be at least 6 characters');
+    }
+
+    const emailCheck = await query('SELECT id FROM users WHERE email = $1', [email]);
+    if (emailCheck.rows.length > 0) {
+        throw new ValidationError('Email is already registered');
+    }
+    
+    await query('BEGIN');
+    try {
+        const hashedPassword = await bcrypt.hash(password, 10);
+        
+        const userResult = await query(`
+            INSERT INTO users (full_name, email, password_hash, is_admin, is_verified)
+            VALUES ($1, $2, $3, $4, $5)
+            RETURNING id, full_name, email, is_admin, is_verified, created_at, updated_at
+        `, [fullName, email, hashedPassword, Boolean(isAdmin), Boolean(isVerified)]);
+        
+        const newUser = userResult.rows[0];
+        
+        // Generate random 10-digit account number
+        const accountNum = Math.floor(1000000000 + Math.random() * 9000000000).toString();
+        
+        // Create default Checking account with 900,000 balance
+        await query(`
+            INSERT INTO accounts (user_id, account_number, type, balance)
+            VALUES ($1, $2, 'Checking', 900000.00)
+        `, [newUser.id, accountNum]);
+        
+        await query('COMMIT');
+        res.status(201).json(newUser);
+    } catch (err) {
+        await query('ROLLBACK');
+        throw err;
+    }
+}));
+
 // Get single user by ID
 router.get('/users/:id', asyncHandler(async (req, res) => {
     const { id } = req.params;
