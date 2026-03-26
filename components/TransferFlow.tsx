@@ -68,20 +68,13 @@ export default function TransferFlow({ onBack, darkMode }: Props) {
   const [endDate, setEndDate] = useState('');
   const [showScheduleConfirm, setShowScheduleConfirm] = useState(false);
 
-  // Limits State (Simulation)
-  const limits = {
-    daily: 5000,
-    perTransaction: 2500,
-    currentDailyUsed: 1200
-  };
+  // Limits removed as per request
 
 
 
   const validateTransfer = () => {
     const numAmount = parseFloat(amount);
     if (isNaN(numAmount) || numAmount <= 0) return "Please enter a valid amount";
-    if (numAmount > limits.perTransaction) return `Exceeds per-transaction limit of $${limits.perTransaction}`;
-    if (numAmount + limits.currentDailyUsed > limits.daily) return `Exceeds remaining daily limit of $${limits.daily - limits.currentDailyUsed}`;
     return null;
   };
 
@@ -227,19 +220,7 @@ export default function TransferFlow({ onBack, darkMode }: Props) {
             )}
           </div>
 
-          {/* Limits Visualization */}
-          <div className={`${darkMode ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-100'} p-4 rounded-2xl border shadow-sm`}>
-            <div className="flex justify-between items-center mb-2">
-              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Daily Limit Usage</span>
-              <span className={`text-[10px] font-bold ${darkMode ? 'text-gray-200' : 'text-gray-900'}`}>${limits.currentDailyUsed + numAmount} / ${limits.daily}</span>
-            </div>
-            <div className={`w-full h-1.5 rounded-full overflow-hidden ${darkMode ? 'bg-gray-800' : 'bg-gray-100'}`}>
-              <div
-                className={`h-full transition-all duration-500 ${(limits.currentDailyUsed + numAmount) > limits.daily ? 'bg-red-500' : 'bg-red-600'}`}
-                style={{ width: `${Math.min(100, ((limits.currentDailyUsed + numAmount) / limits.daily) * 100)}%` }}
-              ></div>
-            </div>
-          </div>
+          {/* Limits Visualization Removed */}
         </div>
 
         <div className={`mt-auto p-4 border-t transition-colors duration-300 ${darkMode ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-100'}`}>
@@ -318,14 +299,14 @@ export default function TransferFlow({ onBack, darkMode }: Props) {
           <div className="w-16 h-16 border-4 border-white/20 border-t-red-600 rounded-full animate-spin mb-6"></div>
           <ShieldCheck size={32} className="text-red-600 mb-2 animate-bounce" />
           <p className="font-black text-xs uppercase tracking-widest">Securing Transaction</p>
-          <p className="text-[10px] opacity-60 mt-1 uppercase tracking-tight">Verifying credentials and limits...</p>
+          <p className="text-[10px] opacity-60 mt-1 uppercase tracking-tight">Verifying credentials and encryption...</p>
         </div>
       )}
 
       {renderScheduleConfirmDialog()}
 
       <div className="flex-1">
-        <h2 className={`text-2xl font-black tracking-tighter mb-6 ${darkMode ? 'text-white' : 'text-gray-900'}`}>Review Transfer</h2>
+        <h2 className={`text-2xl font-black tracking-tighter mb-6 ${darkMode ? 'text-white' : 'text-gray-900'}`}>Review Transaction</h2>
 
         <div className={`${darkMode ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-100'} rounded-[32px] shadow-sm border overflow-hidden mb-6`}>
           <div className={`p-8 flex flex-col items-center border-b relative group ${darkMode ? 'border-gray-800' : 'border-gray-50'}`}>
@@ -627,7 +608,7 @@ export default function TransferFlow({ onBack, darkMode }: Props) {
           <ArrowLeft className="w-6 h-6" />
         </button>
         <h1 className={`text-sm font-black uppercase tracking-widest ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-          {step === 'AMOUNT' ? 'Transfer' : step === 'RECIPIENT' ? 'Recipient' : 'Review'}
+          {step === 'AMOUNT' ? 'Send Money' : step === 'RECIPIENT' ? 'Recipient' : 'Review'}
         </h1>
       </div>
 
