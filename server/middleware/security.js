@@ -26,6 +26,9 @@ export const securityHeaders = helmet({
             connectSrc: [
                 "'self'",
                 "https://esm.sh",
+                "https://cdn.tailwindcss.com",
+                "https://fonts.googleapis.com",
+                "https://fonts.gstatic.com",
             ],
         },
     },
