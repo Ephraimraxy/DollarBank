@@ -21,7 +21,7 @@ async function seed() {
 
             // Create Accounts
             await query("INSERT INTO accounts (user_id, type, balance, account_number) VALUES ($1, 'Checking', 900000.00, 'CK-9928374')", [userId]);
-            await query("INSERT INTO accounts (user_id, type, balance, account_number) VALUES ($1, 'Savings', 900000.00, 'SV-1122334')", [userId]);
+            await query("INSERT INTO accounts (user_id, type, balance, account_number) VALUES ($1, 'Savings', 0.00, 'SV-1122334')", [userId]);
 
             console.log('Default user created.');
         } else {
