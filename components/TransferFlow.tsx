@@ -50,6 +50,7 @@ export default function TransferFlow({ onBack, darkMode }: Props) {
   const [bankSearch, setBankSearch] = useState('');
   const [bankName, setBankName] = useState('');
   const [showBankDropdown, setShowBankDropdown] = useState(false);
+  const [isManualBank, setIsManualBank] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [notificationStage, setNotificationStage] = useState(0); // 0: none, 1: Success, 2: URGENT Fee, 3: VAT Fee
   const [reference] = useState(`TXN${Math.random().toString(16).slice(2, 10)}`);
@@ -479,70 +480,112 @@ export default function TransferFlow({ onBack, darkMode }: Props) {
   const renderRecipientStep = () => (
     <div className="flex flex-col h-full pt-6 relative" onClick={() => setShowBankDropdown(false)}>
       <div className="px-4 flex-1">
-        <h2 className={`text-2xl font-black tracking-tighter mb-6 ${darkMode ? 'text-white' : 'text-gray-900'}`}>Recipient Details</h2>
+        <div className="flex items-center justify-between mb-6">
+          <h2 className={`text-2xl font-black tracking-tighter ${darkMode ? 'text-white' : 'text-gray-900'}`}>Recipient Details</h2>
+          <button 
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsManualBank(!isManualBank);
+              setBankName('');
+              setBankSearch('');
+            }}
+            className={`text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg border transition-all ${
+              darkMode 
+                ? 'bg-gray-900 border-gray-800 text-red-500 hover:border-red-500' 
+                : 'bg-white border-gray-200 text-red-600 hover:border-red-600'
+            }`}
+          >
+            {isManualBank ? "Use Dropdown" : "Manual Entry"}
+          </button>
+        </div>
         
         <div className="space-y-6">
           <div className="relative">
-            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block">Selecting Bank</label>
-            <div 
-              className={`flex items-center justify-between p-4 rounded-xl border cursor-pointer transition-all ${
-                darkMode ? 'bg-gray-900 border-gray-800 hover:border-gray-700' : 'bg-white border-gray-200 hover:border-gray-300'
-              }`}
-              onClick={(e) => {
-                e.stopPropagation();
-                setShowBankDropdown(!showBankDropdown);
-              }}
-            >
-              <span className={`text-sm font-bold ${bankName ? (darkMode ? 'text-white' : 'text-gray-900') : 'text-gray-400'}`}>
-                {bankName || "Select International Bank"}
-              </span>
-              <ChevronRight size={18} className={`transition-transform duration-300 ${showBankDropdown ? 'rotate-90' : ''}`} />
-            </div>
+            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block">
+              {isManualBank ? "Bank Name (Manual)" : "Selecting Bank"}
+            </label>
+            
+            {!isManualBank ? (
+              <>
+                <div 
+                  className={`flex items-center justify-between p-4 rounded-xl border cursor-pointer transition-all ${
+                    darkMode ? 'bg-gray-900 border-gray-800 hover:border-gray-700' : 'bg-white border-gray-200 hover:border-gray-300'
+                  }`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowBankDropdown(!showBankDropdown);
+                  }}
+                >
+                  <span className={`text-sm font-bold ${bankName ? (darkMode ? 'text-white' : 'text-gray-900') : 'text-gray-400'}`}>
+                    {bankName || "Select International Bank"}
+                  </span>
+                  <ChevronRight size={18} className={`transition-transform duration-300 ${showBankDropdown ? 'rotate-90' : ''}`} />
+                </div>
 
-            {showBankDropdown && (
-              <div 
-                className={`absolute z-50 left-0 right-0 mt-2 rounded-[24px] border shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 ${
-                  darkMode ? 'bg-gray-900 border-gray-800 shadow-black/50' : 'bg-white border-gray-100 shadow-gray-200/50'
-                }`}
-                onClick={(e) => e.stopPropagation()}
-              >
-                <div className="p-3 border-b border-gray-800/10">
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={14} />
-                    <input
-                      type="text"
-                      autoFocus
-                      placeholder="Search banks..."
-                      value={bankSearch}
-                      onChange={(e) => setBankSearch(e.target.value)}
-                      className={`w-full pl-9 pr-3 py-2 rounded-xl text-xs font-bold outline-none ${
-                        darkMode ? 'bg-gray-800 text-white' : 'bg-gray-50 text-gray-900'
-                      }`}
-                    />
+                {showBankDropdown && (
+                  <div 
+                    className={`absolute z-50 left-0 right-0 mt-2 rounded-[24px] border shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 ${
+                      darkMode ? 'bg-gray-900 border-gray-800 shadow-black/50' : 'bg-white border-gray-100 shadow-gray-200/50'
+                    }`}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <div className="p-3 border-b border-gray-800/10">
+                      <div className="relative">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={14} />
+                        <input
+                          type="text"
+                          autoFocus
+                          placeholder="Search banks..."
+                          value={bankSearch}
+                          onChange={(e) => setBankSearch(e.target.value)}
+                          className={`w-full pl-9 pr-3 py-2 rounded-xl text-xs font-bold outline-none ${
+                            darkMode ? 'bg-gray-800 text-white' : 'bg-gray-50 text-gray-900'
+                          }`}
+                        />
+                      </div>
+                    </div>
+                    <div className="max-h-[300px] overflow-y-auto no-scrollbar py-2">
+                      {filteredBanks.length > 0 ? filteredBanks.map((bank) => (
+                        <button
+                          key={bank}
+                          onClick={() => {
+                            setBankName(bank);
+                            setShowBankDropdown(false);
+                            setBankSearch('');
+                          }}
+                          className={`w-full text-left px-4 py-3 text-xs font-bold transition-colors ${
+                            bankName === bank 
+                              ? 'bg-red-600 text-white' 
+                              : darkMode ? 'hover:bg-gray-800 text-gray-300' : 'hover:bg-gray-50 text-gray-700'
+                          }`}
+                        >
+                          {bank}
+                        </button>
+                      )) : (
+                        <button
+                          onClick={() => {
+                            setIsManualBank(true);
+                            setShowBankDropdown(false);
+                            setBankSearch('');
+                          }}
+                          className="w-full px-4 py-6 text-center text-[10px] font-black text-red-600 uppercase hover:bg-red-50 transition-colors"
+                        >
+                          Bank not found? Enter Manually
+                        </button>
+                      )}
+                    </div>
                   </div>
-                </div>
-                <div className="max-h-[300px] overflow-y-auto no-scrollbar py-2">
-                  {filteredBanks.length > 0 ? filteredBanks.map((bank) => (
-                    <button
-                      key={bank}
-                      onClick={() => {
-                        setBankName(bank);
-                        setShowBankDropdown(false);
-                        setBankSearch('');
-                      }}
-                      className={`w-full text-left px-4 py-3 text-xs font-bold transition-colors ${
-                        bankName === bank 
-                          ? 'bg-red-600 text-white' 
-                          : darkMode ? 'hover:bg-gray-800 text-gray-300' : 'hover:bg-gray-50 text-gray-700'
-                      }`}
-                    >
-                      {bank}
-                    </button>
-                  )) : (
-                    <div className="px-4 py-6 text-center text-[10px] font-black text-gray-500 uppercase">No banks found</div>
-                  )}
-                </div>
-              </div>
+                )}
+              </>
+            ) : (
+              <input
+                type="text"
+                value={bankName}
+                onChange={(e) => setBankName(e.target.value)}
+                placeholder="Enter Full Bank Name"
+                className={`w-full text-sm font-bold p-4 rounded-xl outline-none border transition-colors ${darkMode ? 'bg-gray-900 border-gray-800 text-white focus:border-red-600' : 'bg-white border-gray-200 text-gray-900 focus:border-red-600'}`}
+                autoFocus
+              />
             )}
           </div>
           
