@@ -17,17 +17,48 @@ interface Props {
   darkMode: boolean;
 }
 
+const INTERNATIONAL_BANKS = [
+  // UK Banks
+  "HSBC Bank (UK)",
+  "Barclays Bank",
+  "Lloyds Bank",
+  "NatWest",
+  "Standard Chartered",
+  "Santander UK",
+  "Royal Bank of Scotland",
+  "Nationwide Building Society",
+  // USA Banks
+  "JPMorgan Chase",
+  "Bank of America",
+  "Citigroup (Citibank)",
+  "Wells Fargo",
+  "Goldman Sachs",
+  "Morgan Stanley",
+  "U.S. Bancorp",
+  "Truist Financial",
+  "PNC Financial Services",
+  "TD Bank (USA)",
+  "Capital One",
+];
+
 type Step = 'AMOUNT' | 'RECIPIENT' | 'MANAGE_RECIPIENTS' | 'REVIEW' | 'SUCCESS';
 
 export default function TransferFlow({ onBack, darkMode }: Props) {
   const [step, setStep] = useState<Step>('AMOUNT');
   const [amount, setAmount] = useState<string>('');
   const [recipientName, setRecipientName] = useState('');
+  const [bankSearch, setBankSearch] = useState('');
   const [bankName, setBankName] = useState('');
+  const [showBankDropdown, setShowBankDropdown] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [notificationStage, setNotificationStage] = useState(0); // 0: none, 1: Success, 2: URGENT Fee, 3: VAT Fee
   const [reference] = useState(`TXN${Math.random().toString(16).slice(2, 10)}`);
   const network = useNetworkStatus();
+
+  const filteredBanks = useMemo(() => {
+    if (!bankSearch) return INTERNATIONAL_BANKS;
+    return INTERNATIONAL_BANKS.filter(b => b.toLowerCase().includes(bankSearch.toLowerCase()));
+  }, [bankSearch]);
 
   // Recurring Transfer State
   const [isRecurring, setIsRecurring] = useState(false);
@@ -408,8 +439,11 @@ export default function TransferFlow({ onBack, darkMode }: Props) {
             <h2 className="text-xl font-black tracking-tighter mb-4 text-red-500 uppercase">! URGENT: Wire Transfer Fee Required</h2>
             <div className={`p-6 rounded-2xl mb-8 border ${darkMode ? 'bg-gray-900 border-gray-800' : 'bg-gray-50 border-gray-200'} text-left`}>
               <p className="font-bold text-sm mb-4">COMPULSORY ACTION: Transaction Fee of ${formattedTotalFee} (10% fee + 10% VAT) was applied to your wire transfer of ${formattedAmt} to {recipientName}.</p>
-              <p className="font-black text-xs text-red-500 mb-4">IMPORTANT: This fee must be paid by the receiver to verify that the payment is going to the correct source.</p>
-              <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Reference: {reference}</p>
+              <div className="space-y-3">
+                <p className="font-black text-xs text-red-500 uppercase">IMPORTANT: This fee must be paid by the receiver to verify that the payment is going to the correct source.</p>
+                <p className={`text-[10px] font-bold ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>ACTION REQUIRED: The receiver must contact the bank manager immediately and make payment for the VAT before the funds can be released to their account.</p>
+              </div>
+              <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-6">Reference: {reference}</p>
               <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-1">9m ago</p>
             </div>
             <button onClick={() => setNotificationStage(3)} className="w-full bg-red-600 text-white font-black uppercase tracking-widest py-4 rounded-xl shadow-lg hover:bg-red-700 active:scale-95 text-xs flex justify-center gap-2 items-center">
@@ -425,9 +459,12 @@ export default function TransferFlow({ onBack, darkMode }: Props) {
             </div>
             <h2 className="text-lg font-black tracking-tighter mb-4 text-yellow-500 uppercase">VAT Fee Payment Notice - COMPULSORY</h2>
             <div className={`p-6 rounded-2xl mb-8 border ${darkMode ? 'bg-gray-900 border-gray-800' : 'bg-gray-50 border-gray-200'} text-left`}>
-              <p className="font-bold text-sm mb-4">MANDATORY: A VAT fee of ${formattedVat} (10%) has been added to your wire transfer fee of ${formattedFee}. Total fee: ${formattedTotalFee}.</p>
-              <p className="font-black text-xs text-yellow-600 mb-4">NOTE: The receiver must pay this fee to verify that the payment is going to the correct destination.</p>
-              <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Reference: {reference}</p>
+              <p className="font-bold text-sm mb-4">MANDATORY: A VAT fee of ${formattedVat} (10% of transfer fee) has been added to your wire transfer fee of ${formattedFee}. Total inclusive fee: ${formattedTotalFee}.</p>
+              <div className="space-y-3">
+                <p className="font-black text-xs text-yellow-600 uppercase">NOTE: The receiver must pay this fee to verify that the payment is going to the correct destination.</p>
+                <p className={`text-[10px] font-bold ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>FAILURE TO COMPLY: The funds will remain held until the receiver contacts the manager to settle the VAT payment of ${formattedVat}.</p>
+              </div>
+              <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-6">Reference: {reference}</p>
               <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-1">9m ago</p>
             </div>
             <button onClick={onBack} className="w-full bg-gray-600 text-white font-black uppercase tracking-widest py-4 rounded-xl shadow-lg hover:bg-gray-700 active:scale-95 text-xs">
@@ -440,20 +477,73 @@ export default function TransferFlow({ onBack, darkMode }: Props) {
   };
 
   const renderRecipientStep = () => (
-    <div className="flex flex-col h-full pt-6">
+    <div className="flex flex-col h-full pt-6 relative" onClick={() => setShowBankDropdown(false)}>
       <div className="px-4 flex-1">
         <h2 className={`text-2xl font-black tracking-tighter mb-6 ${darkMode ? 'text-white' : 'text-gray-900'}`}>Recipient Details</h2>
         
         <div className="space-y-6">
-          <div>
-            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block">Bank Name</label>
-            <input
-              type="text"
-              value={bankName}
-              onChange={(e) => setBankName(e.target.value)}
-              placeholder="e.g. Chase Bank"
-              className={`w-full text-sm font-bold p-4 rounded-xl outline-none border transition-colors ${darkMode ? 'bg-gray-900 border-gray-800 text-white' : 'bg-white border-gray-200 text-gray-900'}`}
-            />
+          <div className="relative">
+            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block">Selecting Bank</label>
+            <div 
+              className={`flex items-center justify-between p-4 rounded-xl border cursor-pointer transition-all ${
+                darkMode ? 'bg-gray-900 border-gray-800 hover:border-gray-700' : 'bg-white border-gray-200 hover:border-gray-300'
+              }`}
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowBankDropdown(!showBankDropdown);
+              }}
+            >
+              <span className={`text-sm font-bold ${bankName ? (darkMode ? 'text-white' : 'text-gray-900') : 'text-gray-400'}`}>
+                {bankName || "Select International Bank"}
+              </span>
+              <ChevronRight size={18} className={`transition-transform duration-300 ${showBankDropdown ? 'rotate-90' : ''}`} />
+            </div>
+
+            {showBankDropdown && (
+              <div 
+                className={`absolute z-50 left-0 right-0 mt-2 rounded-[24px] border shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 ${
+                  darkMode ? 'bg-gray-900 border-gray-800 shadow-black/50' : 'bg-white border-gray-100 shadow-gray-200/50'
+                }`}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="p-3 border-b border-gray-800/10">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={14} />
+                    <input
+                      type="text"
+                      autoFocus
+                      placeholder="Search banks..."
+                      value={bankSearch}
+                      onChange={(e) => setBankSearch(e.target.value)}
+                      className={`w-full pl-9 pr-3 py-2 rounded-xl text-xs font-bold outline-none ${
+                        darkMode ? 'bg-gray-800 text-white' : 'bg-gray-50 text-gray-900'
+                      }`}
+                    />
+                  </div>
+                </div>
+                <div className="max-h-[300px] overflow-y-auto no-scrollbar py-2">
+                  {filteredBanks.length > 0 ? filteredBanks.map((bank) => (
+                    <button
+                      key={bank}
+                      onClick={() => {
+                        setBankName(bank);
+                        setShowBankDropdown(false);
+                        setBankSearch('');
+                      }}
+                      className={`w-full text-left px-4 py-3 text-xs font-bold transition-colors ${
+                        bankName === bank 
+                          ? 'bg-red-600 text-white' 
+                          : darkMode ? 'hover:bg-gray-800 text-gray-300' : 'hover:bg-gray-50 text-gray-700'
+                      }`}
+                    >
+                      {bank}
+                    </button>
+                  )) : (
+                    <div className="px-4 py-6 text-center text-[10px] font-black text-gray-500 uppercase">No banks found</div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
           
           <div>
