@@ -34,7 +34,7 @@ router.get('/', asyncHandler(async (req, res) => {
 }));
 
 router.post('/transfer', validate(transferValidation), asyncHandler(async (req, res) => {
-    const { amount, recipientName, bankName } = req.body;
+    const { amount, recipientName, bankName, recipientAccount } = req.body;
     const userId = req.user.id;
     const userEmail = req.user.email;
 
@@ -60,8 +60,8 @@ router.post('/transfer', validate(transferValidation), asyncHandler(async (req, 
 
         // Record Transaction
         await query(
-            "INSERT INTO transactions (user_id, type, amount, description, recipient_name, status) VALUES ($1, 'debit', $2, $3, $4, 'completed')",
-            [userId, amount, `External Transfer to ${bankName}`, recipientName]
+            "INSERT INTO transactions (user_id, type, amount, description, recipient_name, recipient_account, status) VALUES ($1, 'debit', $2, $3, $4, $5, 'completed')",
+            [userId, amount, `External Transfer to ${bankName}`, recipientName, recipientAccount]
         );
 
         await query('COMMIT');

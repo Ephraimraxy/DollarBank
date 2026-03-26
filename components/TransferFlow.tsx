@@ -55,6 +55,7 @@ export default function TransferFlow({ onBack, darkMode }: Props) {
   const [step, setStep] = useState<Step>('AMOUNT');
   const [amount, setAmount] = useState<string>('');
   const [recipientName, setRecipientName] = useState('');
+  const [recipientAccount, setRecipientAccount] = useState('');
   const [bankSearch, setBankSearch] = useState('');
   const [bankName, setBankName] = useState('');
   const [showBankDropdown, setShowBankDropdown] = useState(false);
@@ -93,7 +94,7 @@ export default function TransferFlow({ onBack, darkMode }: Props) {
   };
 
   const handleRecipientContinue = () => {
-    if (!recipientName.trim() || !bankName.trim()) return;
+    if (!recipientName.trim() || !bankName.trim() || !recipientAccount.trim()) return;
     setStep('REVIEW');
   };
 
@@ -116,7 +117,8 @@ export default function TransferFlow({ onBack, darkMode }: Props) {
         await api.transfer({
           amount: parseFloat(amount),
           recipientName,
-          bankName
+          bankName,
+          recipientAccount
         });
       } else {
         // Mock success for recurring as backend doesn't support it yet
@@ -336,6 +338,7 @@ export default function TransferFlow({ onBack, darkMode }: Props) {
               <div className="text-right">
                 <div className={`font-black text-sm ${darkMode ? 'text-gray-200' : 'text-gray-900'}`}>{recipientName}</div>
                 <div className="text-[10px] font-bold text-gray-400 uppercase tracking-tight">{bankName}</div>
+                <div className="text-[9px] font-mono text-gray-500">{recipientAccount}</div>
               </div>
             </div>
 
@@ -588,13 +591,24 @@ export default function TransferFlow({ onBack, darkMode }: Props) {
               className={`w-full text-sm font-bold p-4 rounded-xl outline-none border transition-colors ${darkMode ? 'bg-gray-900 border-gray-800 text-white' : 'bg-white border-gray-200 text-gray-900'}`}
             />
           </div>
+
+          <div>
+            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block">Recipient Account Number</label>
+            <input
+              type="text"
+              value={recipientAccount}
+              onChange={(e) => setRecipientAccount(e.target.value)}
+              placeholder="Enter Account or IBAN"
+              className={`w-full text-sm font-bold p-4 rounded-xl outline-none border transition-colors ${darkMode ? 'bg-gray-900 border-gray-800 text-white' : 'bg-white border-gray-200 text-gray-900'}`}
+            />
+          </div>
         </div>
       </div>
 
       <div className={`mt-auto p-4 border-t transition-colors duration-300 ${darkMode ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-100'}`}>
         <button
           onClick={handleRecipientContinue}
-          disabled={!recipientName.trim() || !bankName.trim()}
+          disabled={!recipientName.trim() || !bankName.trim() || !recipientAccount.trim()}
           className="w-full bg-red-600 text-white font-black uppercase tracking-widest py-4 rounded-2xl shadow-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-red-700 transition-all active:scale-95 text-xs"
         >
           Review Transfer
