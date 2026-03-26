@@ -68,7 +68,7 @@ export default function Cards({ user, darkMode }: Props) {
               <div className="w-12 h-9 bg-gradient-to-br from-amber-400 to-amber-600 rounded-lg shadow-inner flex items-center justify-center">
                 <Cpu size={24} className="text-amber-900/50" />
               </div>
-              <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2a/Mastercard-logo.svg/1280px-Mastercard-logo.svg.png" className="h-8 opacity-80" alt="Mastercard" />
+              <img src="https://www.mastercard.us/content/dam/mccom/global/logos/logo-mastercard-mobile.svg" className="h-8 opacity-90" alt="Mastercard" />
             </div>
 
             <div>

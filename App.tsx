@@ -129,7 +129,7 @@ export default function App() {
             <div className="relative group">
               <div className="absolute -inset-0.5 bg-gradient-to-r from-red-600 to-amber-500 rounded-full opacity-20 group-hover:opacity-40 transition-opacity blur-sm"></div>
               <img
-                src="https://picsum.photos/100/100"
+                src={`https://ui-avatars.com/api/?name=${encodeURIComponent(user.fullName)}&background=dc2626&color=fff&bold=true`}
                 alt="Profile"
                 className={`relative w-7 h-7 rounded-full border-2 object-cover shadow-sm ${darkMode ? 'border-gray-800' : 'border-white'}`}
               />
