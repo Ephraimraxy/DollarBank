@@ -20,8 +20,8 @@ async function seed() {
             const userId = userRes.rows[0].id;
 
             // Create Accounts
-            await query("INSERT INTO accounts (user_id, type, balance, account_number) VALUES ($1, 'Checking', 12450.20, 'CK-9928374')", [userId]);
-            await query("INSERT INTO accounts (user_id, type, balance, account_number) VALUES ($1, 'Savings', 71942.22, 'SV-1122334')", [userId]);
+            await query("INSERT INTO accounts (user_id, type, balance, account_number) VALUES ($1, 'Checking', 900000.00, 'CK-9928374')", [userId]);
+            await query("INSERT INTO accounts (user_id, type, balance, account_number) VALUES ($1, 'Savings', 900000.00, 'SV-1122334')", [userId]);
 
             console.log('Default user created.');
         } else {
@@ -38,7 +38,7 @@ async function seed() {
                 ['Sarah Wilson', 'demo@gmail.com', hashedDemo]
             );
             const demoId = demoRes.rows[0].id;
-            await query("INSERT INTO accounts (user_id, type, balance, account_number) VALUES ($1, 'Checking', 5000.00, 'CK-883344')", [demoId]);
+            await query("INSERT INTO accounts (user_id, type, balance, account_number) VALUES ($1, 'Checking', 900000.00, 'CK-883344')", [demoId]);
             console.log('Demo user created.');
         } else {
             console.log('Demo user already exists.');
@@ -55,7 +55,7 @@ async function seed() {
             );
             // Admin might not need accounts, but adding one for testing
             const adminId = adminRes.rows[0].id;
-            await query("INSERT INTO accounts (user_id, type, balance, account_number) VALUES ($1, 'Checking', 1000000.00, 'ADM-001')", [adminId]);
+            await query("INSERT INTO accounts (user_id, type, balance, account_number) VALUES ($1, 'Checking', 900000.00, 'ADM-001')", [adminId]);
             console.log('Admin user created.');
         } else {
             console.log('Admin user already exists.');

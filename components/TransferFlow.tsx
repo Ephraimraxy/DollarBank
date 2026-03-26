@@ -39,6 +39,14 @@ const INTERNATIONAL_BANKS = [
   "PNC Financial Services",
   "TD Bank (USA)",
   "Capital One",
+  // Australian Banks
+  "Commonwealth Bank",
+  "Westpac",
+  "ANZ Bank",
+  "NAB (National Australia Bank)",
+  "Macquarie Bank",
+  "Bendigo Bank",
+  "Suncorp Bank",
 ];
 
 type Step = 'AMOUNT' | 'RECIPIENT' | 'MANAGE_RECIPIENTS' | 'REVIEW' | 'SUCCESS';
