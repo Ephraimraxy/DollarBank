@@ -131,7 +131,7 @@ export default function Activity({ onBack, darkMode }: Props) {
             onClick={() => setSelectedTx(null)}
         ></div>
         
-        <div className={`${darkMode ? 'bg-gray-900' : 'bg-white'} w-full max-w-md h-[90vh] sm:h-auto sm:rounded-3xl rounded-t-3xl p-6 relative pointer-events-auto transform transition-transform duration-300 flex flex-col shadow-2xl animate-in slide-in-from-bottom-full`}>
+        <div className={`${darkMode ? 'bg-gray-900' : 'bg-white'} w-full max-w-md max-h-[85dvh] sm:max-h-[90vh] sm:rounded-3xl rounded-t-3xl p-6 relative pointer-events-auto transform transition-transform duration-300 flex flex-col shadow-2xl animate-in slide-in-from-bottom-full overflow-hidden`}>
             <div className={`w-12 h-1.5 rounded-full mx-auto mb-6 sm:hidden ${darkMode ? 'bg-gray-800' : 'bg-gray-200'}`}></div>
 
             <div className="flex justify-between items-center mb-6">
