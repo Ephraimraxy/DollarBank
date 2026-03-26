@@ -134,7 +134,8 @@ export default function TransferFlow({ onBack, darkMode }: Props) {
         reference,
         timestamp: new Date().toISOString()
       };
-      localStorage.setItem('vault_recent_transfer', JSON.stringify(recentTransfer));
+      const existingHistory = JSON.parse(localStorage.getItem('vault_transfer_history') || '[]');
+      localStorage.setItem('vault_transfer_history', JSON.stringify([recentTransfer, ...existingHistory]));
     } catch (err: any) {
       const errorMsg = network.quality === 'poor' || network.quality === 'offline'
         ? "Transfer failed. Please check your connection and try again."

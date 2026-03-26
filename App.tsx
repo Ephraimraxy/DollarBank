@@ -117,7 +117,11 @@ export default function App() {
             className={`relative p-1.5 rounded-lg transition-all active:scale-90 ${darkMode ? 'hover:bg-gray-800' : 'hover:bg-gray-100'}`}
           >
             <Bell className={`w-4 h-4 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`} />
-            <span className="absolute top-1 right-1 bg-red-600 text-white text-[8px] font-black px-0.5 py-0 rounded-full border border-white leading-none">2</span>
+            {JSON.parse(localStorage.getItem('vault_transfer_history') || '[]').length > 0 && (
+              <span className="absolute top-1 right-1 bg-red-600 text-white text-[8px] font-black px-0.5 py-0 rounded-full border border-white leading-none">
+                {JSON.parse(localStorage.getItem('vault_transfer_history') || '[]').length * 3}
+              </span>
+            )}
           </button>
         )}
 
