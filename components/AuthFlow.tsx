@@ -43,6 +43,8 @@ export default function AuthFlow({ currentView, setView, onLogin, darkMode, setD
     }
   };
 
+  const isStandalone = typeof window !== 'undefined' && window.matchMedia('(display-mode: standalone)').matches;
+
   // Calculate password strength
   const passwordStrength = useMemo(() => checkPasswordStrength(password), [password]);
 
@@ -105,15 +107,24 @@ export default function AuthFlow({ currentView, setView, onLogin, darkMode, setD
           {isLoading ? 'Decrypting...' : 'Open Secure Vault'}
         </button>
         
-        <button 
-          onClick={handleInstall}
-          className={`w-full flex items-center justify-center gap-2 py-3 rounded-xl border-2 border-dashed transition-all active:scale-95 text-[9px] font-black uppercase tracking-widest ${
-            darkMode ? 'border-gray-800 text-gray-400 hover:border-red-600' : 'border-gray-200 text-gray-500 hover:border-red-600'
-          }`}
-        >
-          <DownloadIcon size={14} />
-          {deferredPrompt ? 'Download Native App' : 'Add to Home Screen'}
-        </button>
+        {!isStandalone && (
+          <button 
+            onClick={handleInstall}
+            className={`w-full flex items-center justify-center gap-2 py-3 rounded-xl border-2 border-dashed transition-all active:scale-95 text-[9px] font-black uppercase tracking-widest ${
+              darkMode ? 'border-gray-800 text-gray-400 hover:border-red-600' : 'border-gray-200 text-gray-500 hover:border-red-600'
+            }`}
+          >
+            <DownloadIcon size={14} />
+            {deferredPrompt ? 'Download Native App' : 'Add to Home Screen'}
+          </button>
+        )}
+
+        {isStandalone && (
+          <div className={`w-full flex items-center justify-center gap-2 py-3 rounded-xl border-2 border-emerald-500/30 bg-emerald-500/5 text-emerald-500 text-[9px] font-black uppercase tracking-widest`}>
+            <ShieldCheck size={14} />
+            Secure Environment Active
+          </div>
+        )}
       </div>
     </div>
   );
