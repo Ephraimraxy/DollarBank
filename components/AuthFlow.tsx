@@ -3,6 +3,7 @@ import { ViewState } from '../types';
 import { Lock, User, ArrowLeft, ShieldCheck, RefreshCw, AlertTriangle, Eye, EyeOff, ChevronRight, Mail, Globe, Sun, Moon } from 'lucide-react';
 import { checkPasswordStrength, PasswordStrength } from '../src/lib/passwordStrength';
 import { api } from '../src/lib/api';
+import { ShoppingBag as DownloadIcon } from 'lucide-react';
 
 interface Props {
   currentView: ViewState;
@@ -21,6 +22,26 @@ export default function AuthFlow({ currentView, setView, onLogin, darkMode, setD
   const [error, setError] = useState('');
   const [info, setInfo] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+
+  React.useEffect(() => {
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    });
+  }, []);
+
+  const handleInstall = async () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === 'accepted') {
+        setDeferredPrompt(null);
+      }
+    } else {
+      alert("To download: Tap the 'Share' or 'Menu' button in your browser and select 'Add to Home Screen'.");
+    }
+  };
 
   // Calculate password strength
   const passwordStrength = useMemo(() => checkPasswordStrength(password), [password]);
@@ -82,6 +103,16 @@ export default function AuthFlow({ currentView, setView, onLogin, darkMode, setD
       <div className="mt-6 space-y-3">
         <button onClick={() => handleAuth()} disabled={isLoading} className="w-full bg-red-600 text-white font-black uppercase tracking-[0.2em] py-3.5 rounded-xl shadow-xl hover:bg-red-700 active:scale-95 transition-all text-[10px] disabled:opacity-50">
           {isLoading ? 'Decrypting...' : 'Open Secure Vault'}
+        </button>
+        
+        <button 
+          onClick={handleInstall}
+          className={`w-full flex items-center justify-center gap-2 py-3 rounded-xl border-2 border-dashed transition-all active:scale-95 text-[9px] font-black uppercase tracking-widest ${
+            darkMode ? 'border-gray-800 text-gray-400 hover:border-red-600' : 'border-gray-200 text-gray-500 hover:border-red-600'
+          }`}
+        >
+          <DownloadIcon size={14} />
+          {deferredPrompt ? 'Download Native App' : 'Add to Home Screen'}
         </button>
       </div>
     </div>

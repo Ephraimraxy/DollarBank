@@ -28,7 +28,17 @@
   }
 }
 </script>
-<link rel="stylesheet" href="/index.css">
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#dc2626">
+    <link rel="apple-touch-icon" href="/icon.png">
+    <link rel="stylesheet" href="/index.css">
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js');
+        });
+      }
+    </script>
 </head>
   <body>
     <div id="root"></div>

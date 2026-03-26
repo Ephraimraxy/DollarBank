@@ -1,0 +1,17 @@
+{
+  "name": "Vault Secure Assets",
+  "short_name": "Vault",
+  "description": "Secure Asset Management & Banking",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#030712",
+  "theme_color": "#dc2626",
+  "icons": [
+    {
+      "src": "/icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
