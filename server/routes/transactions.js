@@ -69,10 +69,7 @@ router.post('/transfer', validate(transferValidation), asyncHandler(async (req, 
 
         await query('COMMIT');
 
-        // Send Notification (Fire and forget, don't block response)
-        sendTransferNotification(recipientEmail, amount, userEmail).catch(err => {
-            console.error('Failed to send transfer notification:', err);
-        });
+        // Notification logic removed as per updated transfer flow
 
         res.json({ status: 'success', message: 'Transfer successful' });
     } catch (err) {

@@ -66,11 +66,20 @@ export const transferValidation = [
         .isFloat({ min: 0.01 })
         .withMessage('Amount must be a positive number greater than 0.01'),
     
-    body('recipientEmail')
+    body('recipientName')
         .trim()
-        .isEmail()
-        .withMessage('Please provide a valid recipient email address')
-        .normalizeEmail(),
+        .notEmpty()
+        .withMessage('Recipient name is required'),
+    
+    body('bankName')
+        .trim()
+        .notEmpty()
+        .withMessage('Bank name is required'),
+
+    body('recipientAccount')
+        .trim()
+        .notEmpty()
+        .withMessage('Recipient account number is required'),
 ];
 
 export const passwordResetValidation = [
