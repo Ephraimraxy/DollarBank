@@ -81,53 +81,75 @@ export default function AuthFlow({ currentView, setView, onLogin, darkMode, setD
     }
   };
 
-  const renderSignIn = () => (
-    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="mb-6">
-        <h2 className={`text-3xl font-black tracking-tighter mb-1 leading-tight ${darkMode ? 'text-white' : 'text-gray-900'}`}>Welcome Back</h2>
-        <p className="text-xs font-bold text-gray-500 uppercase tracking-widest">Identify Yourself to Continue</p>
-      </div>
+  const renderSignIn = () => {
+    if (!isStandalone) {
+      return (
+        <div className="flex flex-col items-center justify-center min-h-[70vh] text-center animate-in fade-in duration-1000">
+          <div className="relative mb-12">
+            <div className="absolute -inset-10 bg-red-600/10 rounded-full blur-3xl animate-pulse"></div>
+            <div className={`relative w-24 h-24 rounded-3xl border-2 rotate-12 flex items-center justify-center shadow-2xl ${darkMode ? 'bg-gray-900 border-red-900/40' : 'bg-white border-red-100'}`}>
+              <ShieldCheck size={48} className="text-red-600 -rotate-12" />
+            </div>
+          </div>
+          
+          <h2 className={`text-3xl font-black tracking-tighter mb-3 leading-tight ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+            Secure Access Required
+          </h2>
+          <p className="text-xs text-gray-500 font-bold uppercase tracking-[0.2em] mb-8 max-w-[240px] mx-auto leading-relaxed">
+            Please install the Vault Desktop or Mobile app to access your secure assets.
+          </p>
 
-      <div className="space-y-5">
-        <AuthInput icon={<Mail size={18} />} label="Email Address" type="email" value={email} onChange={setEmail} darkMode={darkMode} />
-        <AuthInput icon={<Lock size={18} />} label="Security Key" type={showPassword ? "text" : "password"} value={password} onChange={setPassword} showToggle onToggle={() => setShowPassword(!showPassword)} darkMode={darkMode} />
-
-        <div className="flex justify-between items-center">
-          {error ? (
-            <span className="text-[10px] font-black uppercase text-red-500 animate-pulse">{error}</span>
-          ) : <div />}
-          <button onClick={() => setView(ViewState.FORGOT_PASSWORD)} className="text-[10px] font-black uppercase tracking-widest text-red-600 hover:underline">
-            Lost access to vault?
-          </button>
+          <div className="w-full space-y-4 px-2">
+            <button 
+              onClick={handleInstall}
+              className="w-full bg-red-600 text-white font-black uppercase tracking-[0.2em] py-4 rounded-2xl shadow-[0_10px_40px_rgba(220,38,38,0.3)] hover:bg-red-700 active:scale-95 transition-all flex items-center justify-center gap-3 text-[11px]"
+            >
+              <DownloadIcon size={18} />
+              {deferredPrompt ? 'Download Native App' : 'Install Secure Vault'}
+            </button>
+            
+            <p className="text-[9px] text-gray-400 font-medium px-6">
+              Encrypted access is restricted to the native application environment for your security.
+            </p>
+          </div>
         </div>
-      </div>
+      );
+    }
 
-      <div className="mt-6 space-y-3">
-        <button onClick={() => handleAuth()} disabled={isLoading} className="w-full bg-red-600 text-white font-black uppercase tracking-[0.2em] py-3.5 rounded-xl shadow-xl hover:bg-red-700 active:scale-95 transition-all text-[10px] disabled:opacity-50">
-          {isLoading ? 'Decrypting...' : 'Open Secure Vault'}
-        </button>
-        
-        {!isStandalone && (
-          <button 
-            onClick={handleInstall}
-            className={`w-full flex items-center justify-center gap-2 py-3 rounded-xl border-2 border-dashed transition-all active:scale-95 text-[9px] font-black uppercase tracking-widest ${
-              darkMode ? 'border-gray-800 text-gray-400 hover:border-red-600' : 'border-gray-200 text-gray-500 hover:border-red-600'
-            }`}
-          >
-            <DownloadIcon size={14} />
-            {deferredPrompt ? 'Download Native App' : 'Add to Home Screen'}
+    return (
+      <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <div className="mb-6">
+          <h2 className={`text-3xl font-black tracking-tighter mb-1 leading-tight ${darkMode ? 'text-white' : 'text-gray-900'}`}>Welcome Back</h2>
+          <p className="text-xs font-bold text-gray-500 uppercase tracking-widest">Identify Yourself to Continue</p>
+        </div>
+
+        <div className="space-y-5">
+          <AuthInput icon={<Mail size={18} />} label="Email Address" type="email" value={email} onChange={setEmail} darkMode={darkMode} />
+          <AuthInput icon={<Lock size={18} />} label="Security Key" type={showPassword ? "text" : "password"} value={password} onChange={setPassword} showToggle onToggle={() => setShowPassword(!showPassword)} darkMode={darkMode} />
+
+          <div className="flex justify-between items-center">
+            {error ? (
+              <span className="text-[10px] font-black uppercase text-red-500 animate-pulse">{error}</span>
+            ) : <div />}
+            <button onClick={() => setView(ViewState.FORGOT_PASSWORD)} className="text-[10px] font-black uppercase tracking-widest text-red-600 hover:underline">
+              Lost access to vault?
+            </button>
+          </div>
+        </div>
+
+        <div className="mt-6 space-y-3">
+          <button onClick={() => handleAuth()} disabled={isLoading} className="w-full bg-red-600 text-white font-black uppercase tracking-[0.2em] py-3.5 rounded-xl shadow-xl hover:bg-red-700 active:scale-95 transition-all text-[10px] disabled:opacity-50">
+            {isLoading ? 'Decrypting...' : 'Open Secure Vault'}
           </button>
-        )}
-
-        {isStandalone && (
+          
           <div className={`w-full flex items-center justify-center gap-2 py-3 rounded-xl border-2 border-emerald-500/30 bg-emerald-500/5 text-emerald-500 text-[9px] font-black uppercase tracking-widest`}>
             <ShieldCheck size={14} />
             Secure Environment Active
           </div>
-        )}
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   const handleForgotPassword = async () => {
     setError('');
