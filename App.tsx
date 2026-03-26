@@ -12,7 +12,6 @@ import Admin from './components/Admin';
 import RequestMoney from './components/RequestMoney';
 import Invest from './components/Invest';
 import AiAssistant from './components/AiAssistant';
-import Splash from './components/Splash';
 import AuthFlow from './components/AuthFlow';
 import VerifyEmail from './components/VerifyEmail';
 import VerifyOTP from './components/VerifyOTP';
@@ -34,16 +33,21 @@ export default function App() {
       return ViewState.RESET_PASSWORD;
     }
 
-    return isAuth ? ViewState.HOME : ViewState.SPLASH;
+    return isAuth ? ViewState.HOME : ViewState.SIGN_IN;
   });
 
   useEffect(() => {
-    const handleNavigateToSignup = () => {
-      setCurrentView(ViewState.SIGN_UP);
-    };
-    window.addEventListener('navigate-to-signup', handleNavigateToSignup);
-    return () => window.removeEventListener('navigate-to-signup', handleNavigateToSignup);
+    // Check if we should redirect to Admin on initial load
+    const savedUser = localStorage.getItem('vault-id-user-identity');
+    if (savedUser) {
+      const parsed = JSON.parse(savedUser);
+      if (parsed.isAdmin && currentView === ViewState.HOME) {
+        setCurrentView(ViewState.ADMIN);
+      }
+    }
   }, []);
+
+
 
   const [user, setUser] = useState(() => {
     const saved = localStorage.getItem('vault-id-user-identity');
@@ -62,21 +66,24 @@ export default function App() {
 
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [authStage, setAuthStage] = useState<'SCANNING' | 'SUCCESS'>('SCANNING');
+  const [adminTab, setAdminTab] = useState<any>('dashboard');
 
   useEffect(() => {
     localStorage.setItem('vault-id-dark-mode', JSON.stringify(darkMode));
     localStorage.setItem('vault-id-user-identity', JSON.stringify(user));
   }, [darkMode, user]);
 
-  const handleLoginSuccess = () => {
+  const handleLoginSuccess = (loggedInUser?: any) => {
     localStorage.setItem('vault-session-active', 'true');
     setIsAuthenticating(true);
     setAuthStage('SCANNING');
 
+    const isAdmin = loggedInUser?.isAdmin || JSON.parse(localStorage.getItem('vault-id-user-identity') || '{}').isAdmin;
+
     setTimeout(() => setAuthStage('SUCCESS'), 1200);
     setTimeout(() => {
       setIsAuthenticating(false);
-      setCurrentView(ViewState.HOME);
+      setCurrentView(isAdmin ? ViewState.ADMIN : ViewState.HOME);
     }, 1800);
   };
 
@@ -104,27 +111,31 @@ export default function App() {
       <div className="flex items-center space-x-1">
         <NetworkIndicator darkMode={darkMode} />
         
-        <button
-          onClick={() => setCurrentView(ViewState.NOTIFICATIONS)}
-          className={`relative p-1.5 rounded-lg transition-all active:scale-90 ${darkMode ? 'hover:bg-gray-800' : 'hover:bg-gray-100'}`}
-        >
-          <Bell className={`w-4 h-4 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`} />
-          <span className="absolute top-1 right-1 bg-red-600 text-white text-[8px] font-black px-0.5 py-0 rounded-full border border-white leading-none">2</span>
-        </button>
+        {!user.isAdmin && (
+          <button
+            onClick={() => setCurrentView(ViewState.NOTIFICATIONS)}
+            className={`relative p-1.5 rounded-lg transition-all active:scale-90 ${darkMode ? 'hover:bg-gray-800' : 'hover:bg-gray-100'}`}
+          >
+            <Bell className={`w-4 h-4 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`} />
+            <span className="absolute top-1 right-1 bg-red-600 text-white text-[8px] font-black px-0.5 py-0 rounded-full border border-white leading-none">2</span>
+          </button>
+        )}
 
-        <button
-          onClick={() => setCurrentView(ViewState.PROFILE)}
-          className="active:scale-95 transition-transform ml-0.5 p-0.5"
-        >
-          <div className="relative group">
-            <div className="absolute -inset-0.5 bg-gradient-to-r from-red-600 to-amber-500 rounded-full opacity-20 group-hover:opacity-40 transition-opacity blur-sm"></div>
-            <img
-              src="https://picsum.photos/100/100"
-              alt="Profile"
-              className={`relative w-7 h-7 rounded-full border-2 object-cover shadow-sm ${darkMode ? 'border-gray-800' : 'border-white'}`}
-            />
-          </div>
-        </button>
+        {!user.isAdmin && (
+          <button
+            onClick={() => setCurrentView(ViewState.PROFILE)}
+            className="active:scale-95 transition-transform ml-0.5 p-0.5"
+          >
+            <div className="relative group">
+              <div className="absolute -inset-0.5 bg-gradient-to-r from-red-600 to-amber-500 rounded-full opacity-20 group-hover:opacity-40 transition-opacity blur-sm"></div>
+              <img
+                src="https://picsum.photos/100/100"
+                alt="Profile"
+                className={`relative w-7 h-7 rounded-full border-2 object-cover shadow-sm ${darkMode ? 'border-gray-800' : 'border-white'}`}
+              />
+            </div>
+          </button>
+        )}
       </div>
     </div>
   );
@@ -151,10 +162,7 @@ export default function App() {
 
   const renderContent = () => {
     switch (currentView) {
-      case ViewState.SPLASH:
-        return <Splash darkMode={darkMode} setDarkMode={setDarkMode} onNext={() => setCurrentView(ViewState.SIGN_IN)} />;
       case ViewState.SIGN_IN:
-      case ViewState.SIGN_UP:
       case ViewState.FORGOT_PASSWORD:
       case ViewState.REVERIFY:
         return <AuthFlow currentView={currentView} setView={setCurrentView} onLogin={handleLoginSuccess} darkMode={darkMode} setDarkMode={setDarkMode} setUser={setUser} />;
@@ -186,7 +194,7 @@ export default function App() {
       case ViewState.PROFILE:
         return <Profile user={user} setUser={setUser} onBack={() => setCurrentView(ViewState.HOME)} darkMode={darkMode} setDarkMode={setDarkMode} onLogout={handleLogout} onAdmin={() => setCurrentView(ViewState.ADMIN)} />;
       case ViewState.ADMIN:
-        return <Admin onBack={() => setCurrentView(ViewState.PROFILE)} darkMode={darkMode} user={user} />;
+        return <Admin onBack={() => handleLogout()} darkMode={darkMode} user={user} activeTab={adminTab} onTabChange={setAdminTab} />;
       case ViewState.REQUEST:
         return <RequestMoney onBack={() => setCurrentView(ViewState.HOME)} darkMode={darkMode} />;
       case ViewState.SUPPORT:
@@ -199,9 +207,7 @@ export default function App() {
   };
 
   const isAuthView = [
-    ViewState.SPLASH,
     ViewState.SIGN_IN,
-    ViewState.SIGN_UP,
     ViewState.FORGOT_PASSWORD,
     ViewState.REVERIFY,
     ViewState.VERIFY_EMAIL,
@@ -221,7 +227,7 @@ export default function App() {
 
         {!isAuthView && <AiAssistant user={user} darkMode={darkMode} />}
 
-        {!isAuthView && (
+        {!isAuthView && !user.isAdmin && (
           <div className={`border-t flex justify-around items-stretch px-1 fixed bottom-0 w-full max-w-md z-50 transition-all duration-500 h-[60px] ${darkMode
             ? 'bg-gray-950/90 border-gray-800 backdrop-blur-xl shadow-[0_-10px_30px_rgba(0,0,0,0.5)]'
             : 'bg-white/90 border-gray-100 backdrop-blur-xl shadow-[0_-10px_30px_rgba(0,0,0,0.05)]'
@@ -231,6 +237,23 @@ export default function App() {
             <NavButton icon={<CreditCard size={18} />} label="Cards" isActive={currentView === ViewState.CARDS} onClick={() => setCurrentView(ViewState.CARDS)} darkMode={darkMode} />
             <NavButton icon={<TrendingUp size={18} />} label="Invest" isActive={currentView === ViewState.INVEST} onClick={() => setCurrentView(ViewState.INVEST)} darkMode={darkMode} />
             <NavButton icon={<FileText size={18} />} label="Activity" isActive={currentView === ViewState.ACTIVITY} onClick={() => setCurrentView(ViewState.ACTIVITY)} darkMode={darkMode} />
+          </div>
+        )}
+
+        {!isAuthView && user.isAdmin && (
+          <div className={`border-t flex items-stretch px-2 fixed bottom-0 w-full max-w-md z-50 transition-all duration-500 h-[70px] overflow-x-auto no-scrollbar scroll-smooth ${darkMode
+            ? 'bg-gray-950/90 border-gray-800 backdrop-blur-xl shadow-[0_-10px_30px_rgba(0,0,0,0.5)]'
+            : 'bg-white/90 border-gray-100 backdrop-blur-xl shadow-[0_-10px_30px_rgba(0,0,0,0.05)]'
+            }`}>
+            <div className="flex gap-1 min-w-full">
+              <NavButton icon={<ShieldCheck size={18} />} label="Admin" isActive={adminTab === 'dashboard'} onClick={() => { setCurrentView(ViewState.ADMIN); setAdminTab('dashboard'); }} darkMode={darkMode} />
+              <NavButton icon={<User size={18} />} label="Users" isActive={adminTab === 'users'} onClick={() => { setCurrentView(ViewState.ADMIN); setAdminTab('users'); }} darkMode={darkMode} />
+              <NavButton icon={<CreditCard size={18} />} label="Accounts" isActive={adminTab === 'accounts'} onClick={() => { setCurrentView(ViewState.ADMIN); setAdminTab('accounts'); }} darkMode={darkMode} />
+              <NavButton icon={<ArrowRightLeft size={18} />} label="Transfers" isActive={adminTab === 'transactions'} onClick={() => { setCurrentView(ViewState.ADMIN); setAdminTab('transactions'); }} darkMode={darkMode} />
+              <NavButton icon={<TrendingUp size={18} />} label="Stats" isActive={adminTab === 'analytics'} onClick={() => { setCurrentView(ViewState.ADMIN); setAdminTab('analytics'); }} darkMode={darkMode} />
+              <NavButton icon={<Lock size={18} />} label="Security" isActive={false} onClick={() => {}} darkMode={darkMode} />
+              <NavButton icon={<Menu size={18} />} label="Logout" isActive={false} onClick={handleLogout} darkMode={darkMode} />
+            </div>
           </div>
         )}
       </div>

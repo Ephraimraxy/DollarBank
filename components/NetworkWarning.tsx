@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { AlertTriangle, X, WifiOff } from 'lucide-react';
+import { AlertTriangle, X, Wifi } from 'lucide-react';
 import { useNetworkStatus } from '../src/hooks/useNetworkStatus';
 
 interface Props {
@@ -26,7 +26,7 @@ export default function NetworkWarning({ darkMode, onDismiss, operation = 'this 
   };
 
   return (
-    <div className={`fixed top-16 left-4 right-4 z-50 animate-in slide-in-from-top-2 duration-300 ${
+    <div className={`absolute top-16 left-4 right-4 z-50 animate-in slide-in-from-top-2 duration-300 ${
       isOffline
         ? darkMode ? 'bg-gray-900 border-red-500/40' : 'bg-red-50 border-red-200'
         : darkMode ? 'bg-gray-900 border-orange-500/40' : 'bg-orange-50 border-orange-200'
@@ -38,7 +38,7 @@ export default function NetworkWarning({ darkMode, onDismiss, operation = 'this 
             : darkMode ? 'bg-orange-500/20' : 'bg-orange-100'
         }`}>
           {isOffline ? (
-            <WifiOff size={20} className="text-red-600" />
+            <Wifi size={20} className="text-red-600 opacity-50" />
           ) : (
             <AlertTriangle size={20} className="text-orange-600" />
           )}

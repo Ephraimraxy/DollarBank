@@ -12,6 +12,8 @@ interface Props {
   onBack: () => void;
   darkMode: boolean;
   user: any;
+  activeTab: Tab;
+  onTabChange: (tab: Tab) => void;
 }
 
 interface User {
@@ -54,8 +56,7 @@ interface Transaction {
 
 type Tab = 'dashboard' | 'users' | 'accounts' | 'transactions' | 'analytics';
 
-export default function Admin({ onBack, darkMode, user }: Props) {
-  const [activeTab, setActiveTab] = useState<Tab>('dashboard');
+export default function Admin({ onBack, darkMode, user, activeTab, onTabChange }: Props) {
   const [users, setUsers] = useState<User[]>([]);
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -357,28 +358,6 @@ export default function Admin({ onBack, darkMode, user }: Props) {
         </button>
       </div>
 
-      {/* Tabs */}
-      <div className={`px-4 pt-3 pb-2 flex gap-1 overflow-x-auto ${darkMode ? 'bg-gray-900' : 'bg-white'} border-b ${darkMode ? 'border-gray-800' : 'border-gray-100'}`}>
-        {(['dashboard', 'users', 'accounts', 'transactions', 'analytics'] as Tab[]).map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            className={`px-3 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest whitespace-nowrap transition-all ${
-              activeTab === tab
-                ? darkMode ? 'bg-red-600 text-white' : 'bg-red-600 text-white'
-                : darkMode ? 'text-gray-400 hover:text-white' : 'text-gray-500 hover:text-gray-900'
-            }`}
-          >
-            {tab === 'dashboard' && <PieChart size={12} className="inline mr-1" />}
-            {tab === 'users' && <User size={12} className="inline mr-1" />}
-            {tab === 'accounts' && <CreditCard size={12} className="inline mr-1" />}
-            {tab === 'transactions' && <FileText size={12} className="inline mr-1" />}
-            {tab === 'analytics' && <PieChart size={12} className="inline mr-1" />}
-            {tab}
-          </button>
-        ))}
-      </div>
-
       {/* Messages */}
       <div className="px-4 py-2 min-h-[20px]">
         {error && <p className="text-[9px] font-black uppercase text-red-500">{error}</p>}
@@ -584,7 +563,7 @@ const MetricCard = ({ icon, label, value, darkMode }: any) => (
 const UsersTab = ({
   users, editingUser, editForm, setEditForm, showPasswordForm, setShowPasswordForm,
   newPassword, setNewPassword, deleteConfirm, searchQuery, setSearchQuery,
-  onEdit, onCheck, onCancel, onDeleteClick, onPasswordUpdate, darkMode, currentUserId,
+  onEdit, onSave, onCancel, onDeleteClick, onPasswordUpdate, darkMode, currentUserId,
   isCreatingUser, setIsCreatingUser, createUserForm, setCreateUserForm, onCreateUser
 }: any) => (
   <div className="py-4 space-y-3">
@@ -753,7 +732,7 @@ const UsersTab = ({
 // Accounts Tab Component
 const AccountsTab = ({
   accounts, editingAccount, balanceAdjustment, setBalanceAdjustment,
-  searchQuery, setSearchQuery, onEdit, onCheck, onCancel, darkMode
+  searchQuery, setSearchQuery, onEdit, onSave, onCancel, darkMode
 }: any) => {
   const formatCurrency = (amount: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
 

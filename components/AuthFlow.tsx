@@ -25,23 +25,11 @@ export default function AuthFlow({ currentView, setView, onLogin, darkMode, setD
   // Calculate password strength
   const passwordStrength = useMemo(() => checkPasswordStrength(password), [password]);
 
-  const handleAuth = async (isRegister: boolean) => {
+  const handleAuth = async () => {
     setError('');
     setIsLoading(true);
     try {
-      let response;
-      if (isRegister) {
-        response = await api.register({ fullName, email, password });
-        
-        // For registration, navigate to OTP verification page
-        if (response.email) {
-          localStorage.setItem('pending-verification-email', response.email);
-          setView(ViewState.VERIFY_OTP);
-          return;
-        }
-      } else {
-        response = await api.login({ email, password });
-      }
+      const response = await api.login({ email, password });
 
       const { user, token } = response;
 
@@ -92,7 +80,7 @@ export default function AuthFlow({ currentView, setView, onLogin, darkMode, setD
       </div>
 
       <div className="mt-6 space-y-3">
-        <button onClick={() => handleAuth(false)} disabled={isLoading} className="w-full bg-red-600 text-white font-black uppercase tracking-[0.2em] py-3.5 rounded-xl shadow-xl hover:bg-red-700 active:scale-95 transition-all text-[10px] disabled:opacity-50">
+        <button onClick={() => handleAuth()} disabled={isLoading} className="w-full bg-red-600 text-white font-black uppercase tracking-[0.2em] py-3.5 rounded-xl shadow-xl hover:bg-red-700 active:scale-95 transition-all text-[10px] disabled:opacity-50">
           {isLoading ? 'Decrypting...' : 'Open Secure Vault'}
         </button>
       </div>
@@ -115,50 +103,6 @@ export default function AuthFlow({ currentView, setView, onLogin, darkMode, setD
       setIsLoading(false);
     }
   };
-
-  const renderSignUp = () => (
-    <div className="animate-in fade-in slide-in-from-right-4 duration-500">
-      <div className="mb-6">
-        <h2 className={`text-3xl font-black tracking-tighter mb-1 leading-tight ${darkMode ? 'text-white' : 'text-gray-900'}`}>New Account</h2>
-        <p className="text-xs font-bold text-gray-500 uppercase tracking-widest">Establish your Platinum Identity</p>
-      </div>
-
-      <div className="space-y-5">
-        <AuthInput icon={<User size={18} />} label="Legal Full Name" type="text" value={fullName} onChange={setFullName} darkMode={darkMode} />
-        <AuthInput icon={<Mail size={18} />} label="Secure Email" type="email" value={email} onChange={setEmail} darkMode={darkMode} />
-        <div>
-          <AuthInput 
-            icon={<Lock size={18} />} 
-            label="Vault Passphrase" 
-            type={showPassword ? "text" : "password"} 
-            value={password} 
-            onChange={setPassword} 
-            showToggle 
-            onToggle={() => setShowPassword(!showPassword)} 
-            darkMode={darkMode} 
-          />
-          {password && (
-            <PasswordStrengthIndicator strength={passwordStrength} darkMode={darkMode} />
-          )}
-        </div>
-      </div>
-
-      <div className="mt-4 h-4">
-        {error && <span className="text-[10px] font-black uppercase text-red-500">{error}</span>}
-        {info && <span className="text-[10px] font-black uppercase text-emerald-500">{info}</span>}
-      </div>
-
-      <div className="mt-6 space-y-3">
-        <button onClick={() => handleAuth(true)} disabled={isLoading} className="w-full bg-red-600 text-white font-black uppercase tracking-widest py-3.5 rounded-xl shadow-xl hover:bg-red-700 active:scale-95 transition-all text-[10px] disabled:opacity-50">
-          {isLoading ? 'Registering...' : 'Register Platinum Identity'}
-        </button>
-        <button onClick={() => setView(ViewState.SIGN_IN)} className={`w-full font-black uppercase tracking-widest py-3.5 rounded-xl border-2 text-[10px] transition-all ${darkMode ? 'border-gray-800 text-gray-400 hover:bg-gray-800' : 'border-gray-100 text-gray-500 hover:bg-gray-50'
-          }`}>
-          Already Have Access? Sign In
-        </button>
-      </div>
-    </div>
-  );
 
   const renderForgot = () => (
     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -275,7 +219,6 @@ export default function AuthFlow({ currentView, setView, onLogin, darkMode, setD
       </div>
 
       {currentView === ViewState.SIGN_IN && renderSignIn()}
-      {currentView === ViewState.SIGN_UP && renderSignUp()}
       {currentView === ViewState.FORGOT_PASSWORD && renderForgot()}
       {currentView === ViewState.REVERIFY && renderReverify()}
     </div>

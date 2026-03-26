@@ -1,5 +1,5 @@
 import React from 'react';
-import { Wifi, WifiOff, AlertTriangle, CheckCircle2, Loader2 } from 'lucide-react';
+import { Wifi, AlertTriangle, CheckCircle2, Loader2 } from 'lucide-react';
 import { useNetworkStatus, ConnectionQuality } from '../src/hooks/useNetworkStatus';
 
 interface Props {
@@ -46,7 +46,7 @@ export default function NetworkIndicator({ darkMode, showDetailed = false }: Pro
         };
       case 'offline':
         return {
-          icon: <WifiOff size={14} className="text-red-500" />,
+          icon: <Wifi size={14} className="text-red-500 opacity-50" />,
           text: 'Offline',
           color: 'text-red-500',
           bgColor: darkMode ? 'bg-red-500/10' : 'bg-red-50',

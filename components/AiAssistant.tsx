@@ -58,14 +58,14 @@ export default function AiAssistant({ user, darkMode }: Props) {
   return (
     <>
       {!isOpen && (
-        <button onClick={() => setIsOpen(true)} className="fixed bottom-24 right-6 w-14 h-14 bg-red-600 text-white rounded-[20px] shadow-2xl flex items-center justify-center hover:bg-red-700 transition-all active:scale-95 z-50 group">
+        <button onClick={() => setIsOpen(true)} className="absolute bottom-24 right-6 w-14 h-14 bg-red-600 text-white rounded-[20px] shadow-2xl flex items-center justify-center hover:bg-red-700 transition-all active:scale-95 z-50 group">
           <div className="absolute -inset-1 bg-red-600 rounded-[20px] blur opacity-30 group-hover:opacity-60 transition-opacity"></div>
           <Sparkles size={24} className="relative" />
         </button>
       )}
 
       {isOpen && (
-        <div className={`fixed bottom-24 right-6 w-[calc(100%-3rem)] max-w-[350px] h-[550px] rounded-[32px] shadow-2xl flex flex-col overflow-hidden z-[60] border animate-in slide-in-from-bottom-4 duration-500 ${darkMode ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-100'
+        <div className={`absolute bottom-24 right-6 w-[calc(100%-3rem)] max-w-[350px] h-[550px] rounded-[32px] shadow-2xl flex flex-col overflow-hidden z-[60] border animate-in slide-in-from-bottom-4 duration-500 ${darkMode ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-100'
           }`}>
           {/* Header */}
           <div className="bg-gradient-to-r from-red-600 to-red-800 p-5 text-white flex justify-between items-center">
