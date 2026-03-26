@@ -131,6 +131,7 @@ export default function TransferFlow({ onBack, darkMode }: Props) {
       const recentTransfer = {
         amount: parseFloat(amount),
         recipientName,
+        reference,
         timestamp: new Date().toISOString()
       };
       localStorage.setItem('vault_recent_transfer', JSON.stringify(recentTransfer));
@@ -408,8 +409,10 @@ export default function TransferFlow({ onBack, darkMode }: Props) {
 
   const renderSuccessStep = () => {
     const amt = parseFloat(amount);
-    const fee = amt * 0.10;
-    const totalAmount = amt + fee;
+    const baseFee = amt * 0.10;
+    const vatFee = baseFee * 0.10;
+    const totalFee = baseFee + vatFee;
+    const totalAmount = amt + totalFee;
     
     return (
       <div className={`h-full flex flex-col p-6 transition-colors duration-300 ${darkMode ? 'bg-gray-950 text-white' : 'bg-gray-50 text-gray-900'}`}>
@@ -458,7 +461,11 @@ export default function TransferFlow({ onBack, darkMode }: Props) {
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-[10px] font-bold text-gray-500 uppercase">Service Fee (10%)</span>
-                <span className="text-xs font-black">${fee.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                <span className="text-xs font-black">${baseFee.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-[10px] font-bold text-gray-500 uppercase">VAT (10% of Fee)</span>
+                <span className="text-xs font-black">${vatFee.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
               </div>
               <div className="pt-3 border-t border-gray-700/10 flex justify-between items-center">
                 <span className="text-[11px] font-black uppercase tracking-widest text-red-600">Total Debit</span>

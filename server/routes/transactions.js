@@ -50,12 +50,14 @@ router.post('/transfer', validate(transferValidation), asyncHandler(async (req, 
             throw new ValidationError('No checking account found');
         }
 
-        const fee = amount * 0.10;
-        const totalDebit = amount + fee;
+        const baseFee = amount * 0.10;
+        const vatFee = baseFee * 0.10;
+        const totalFee = baseFee + vatFee;
+        const totalDebit = amount + totalFee;
 
         if (parseFloat(senderAcc.balance) < totalDebit) {
             await query('ROLLBACK');
-            throw new ValidationError('Insufficient funds (including 10% service fee)');
+            throw new ValidationError('Insufficient funds (including 10% fee + 10% VAT)');
         }
 
         // Debit Sender
@@ -64,7 +66,7 @@ router.post('/transfer', validate(transferValidation), asyncHandler(async (req, 
         // Record Transaction
         await query(
             "INSERT INTO transactions (user_id, type, amount, description, recipient_name, recipient_account, status) VALUES ($1, 'debit', $2, $3, $4, $5, 'completed')",
-            [userId, totalDebit, `External Transfer to ${bankName} (Incl. 10% Fee)`, recipientName, recipientAccount]
+            [userId, totalDebit, `External Transfer to ${bankName} (Incl. 10% Fee + 10% VAT)`, recipientName, recipientAccount]
         );
 
         await query('COMMIT');
