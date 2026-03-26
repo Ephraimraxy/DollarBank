@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { ArrowLeft, Bell, AlertCircle, Info, CheckCircle, ChevronRight, MessageSquare, Trash2 as BoxIcon } from 'lucide-react';
+import { ArrowLeft, Bell, AlertCircle, Info, CheckCircle, ChevronRight, MessageCircle, Trash2 as BoxIcon } from 'lucide-react';
 import { ViewState } from '../types';
 
 interface Props {
@@ -62,7 +62,7 @@ export default function Notifications({ onBack, onSupport, darkMode }: Props) {
                   <div className="mt-3 flex items-center gap-4">
                     <span className="text-[10px] text-gray-400">Just Now</span>
                     <button className="flex items-center gap-1 text-gray-500 text-[10px] font-bold">
-                      <MessageSquare size={12} /> Reply
+                      <MessageCircle size={12} /> Reply
                     </button>
                   </div>
                 </div>
