@@ -20,10 +20,43 @@ export default function Notifications({ onBack, onSupport, darkMode }: Props) {
           </button>
           <h1 className={`text-lg font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>Notifications</h1>
         </div>
-        <button className="text-red-600 text-sm font-medium">Clear All</button>
+        <button 
+          onClick={() => {
+            localStorage.removeItem('vault_recent_transfer');
+            window.location.reload();
+          }}
+          className="text-red-600 text-sm font-medium"
+        >
+          Clear All
+        </button>
       </div>
 
       <div className="p-4 space-y-4">
+        {localStorage.getItem('vault_recent_transfer') && (
+          (() => {
+            const tx = JSON.parse(localStorage.getItem('vault_recent_transfer')!);
+            return (
+              <div 
+                className={`${darkMode ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-100'} p-4 rounded-xl border-l-4 border-l-orange-500 shadow-sm animate-in slide-in-from-top-4 duration-500 border`}
+              >
+                <div className="flex justify-between items-start mb-1">
+                  <div className="flex items-center gap-2">
+                    <Bell size={16} className="text-orange-500" />
+                    <span className={`font-bold text-sm ${darkMode ? 'text-gray-200' : 'text-gray-900'}`}>Action Required</span>
+                  </div>
+                  <span className="text-[10px] text-gray-400">Just Now</span>
+                </div>
+                <p className={`text-[12px] font-bold mt-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                  CONTACT ACCOUNT MANAGER FOR APPROVAL of your recent transfer of ${tx.amount.toLocaleString()}.
+                </p>
+                <div onClick={onSupport} className="mt-3 flex items-center text-red-600 text-[10px] font-black uppercase tracking-widest cursor-pointer hover:underline">
+                  Contact Support <ChevronRight size={12} />
+                </div>
+              </div>
+            );
+          })()
+        )}
+
         <div className="text-xs font-bold text-gray-400 uppercase tracking-wider">Today</div>
         
         <div 

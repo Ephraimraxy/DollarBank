@@ -126,6 +126,14 @@ export default function TransferFlow({ onBack, darkMode }: Props) {
       }
       setStep('SUCCESS');
       setNotificationStage(1);
+      
+      // Store for notification bell
+      const recentTransfer = {
+        amount: parseFloat(amount),
+        recipientName,
+        timestamp: new Date().toISOString()
+      };
+      localStorage.setItem('vault_recent_transfer', JSON.stringify(recentTransfer));
     } catch (err: any) {
       const errorMsg = network.quality === 'poor' || network.quality === 'offline'
         ? "Transfer failed. Please check your connection and try again."
@@ -344,7 +352,9 @@ export default function TransferFlow({ onBack, darkMode }: Props) {
 
             <div className="flex justify-between items-center">
               <span className="text-gray-400 text-[9px] font-black uppercase tracking-widest">Service Fee</span>
-              <span className="font-black text-sm text-green-600 uppercase">Waived</span>
+              <span className={`font-black text-sm uppercase ${darkMode ? 'text-gray-200' : 'text-gray-900'}`}>
+                ${(parseFloat(amount) * 0.1).toFixed(2)}
+              </span>
             </div>
 
             <div className="flex justify-between items-center">
@@ -399,75 +409,90 @@ export default function TransferFlow({ onBack, darkMode }: Props) {
   const renderSuccessStep = () => {
     const amt = parseFloat(amount);
     const fee = amt * 0.10;
-    const vat = fee * 0.10;
-    const totalFee = fee + vat;
-    const formattedAmt = amt.toFixed(2);
-    const formattedFee = fee.toFixed(2);
-    const formattedVat = vat.toFixed(2);
-    const formattedTotalFee = totalFee.toFixed(2);
-
+    const totalAmount = amt + fee;
+    
     return (
-      <div className={`h-full flex flex-col items-center justify-center p-6 text-center relative transition-colors duration-300 ${darkMode ? 'bg-gray-950 text-white' : 'bg-white text-gray-900'}`}>
-        {notificationStage === 1 && (
-          <div className="animate-in zoom-in-95 duration-500 w-full max-w-sm">
-            <div className={`w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner ${darkMode ? 'bg-green-900/30 text-green-400 border border-green-800' : 'bg-green-100 text-green-600'}`}>
-              <Check size={40} className="drop-shadow-sm" />
+      <div className={`h-full flex flex-col p-6 transition-colors duration-300 ${darkMode ? 'bg-gray-950 text-white' : 'bg-gray-50 text-gray-900'}`}>
+        <div className="flex-1 overflow-y-auto no-scrollbar pt-4">
+          <div className="flex flex-col items-center mb-8 animate-in zoom-in-95 duration-500">
+            <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-4 shadow-inner ${darkMode ? 'bg-green-900/30 text-green-400 border border-green-800' : 'bg-green-100 text-green-600'}`}>
+              <Check size={32} className="drop-shadow-sm" />
             </div>
-            <h2 className="text-2xl font-black tracking-tighter mb-4">Transfer Successful</h2>
-            <div className={`p-6 rounded-2xl mb-8 border ${darkMode ? 'bg-gray-900 border-gray-800' : 'bg-gray-50 border-gray-200'}`}>
-              <p className="font-bold text-sm mb-2 text-left">You sent ${formattedAmt} to {recipientName}.</p>
-              <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest text-left">Reference: {reference}</p>
-            </div>
-            <button onClick={() => setNotificationStage(2)} className="w-full bg-red-600 text-white font-black uppercase tracking-widest py-4 rounded-xl shadow-lg hover:bg-red-700 active:scale-95 text-xs">
-              Continue
-            </button>
+            <h2 className="text-xl font-black tracking-tighter uppercase">Transfer Initiated</h2>
+            <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mt-1">Ref: {reference}</p>
           </div>
-        )}
 
-        {notificationStage === 2 && (
-          <div className="animate-in slide-in-from-right-8 duration-500 w-full max-w-sm">
-            <div className={`w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner ${darkMode ? 'bg-red-900/30 text-red-500 border border-red-800' : 'bg-red-100 text-red-600'}`}>
-              <AlertCircle size={40} className="drop-shadow-sm" />
-            </div>
-            <h2 className="text-xl font-black tracking-tighter mb-4 text-red-500 uppercase">! URGENT: Wire Transfer Fee Required</h2>
-            <div className={`p-6 rounded-2xl mb-8 border ${darkMode ? 'bg-gray-900 border-gray-800' : 'bg-gray-50 border-gray-200'} text-left`}>
-              <p className="font-bold text-sm mb-4">COMPULSORY ACTION: Transaction Fee of ${formattedTotalFee} (10% fee + 10% VAT) was applied to your wire transfer of ${formattedAmt} to {recipientName}.</p>
-              <div className="space-y-3">
-                <p className="font-black text-xs text-red-500 uppercase">IMPORTANT: This fee must be paid by the receiver to verify that the payment is going to the correct source.</p>
-                <p className={`text-[10px] font-bold ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>ACTION REQUIRED: The receiver must contact the bank manager immediately and make payment for the VAT before the funds can be released to their account.</p>
+          <div className={`${darkMode ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-100'} rounded-3xl border shadow-xl overflow-hidden animate-in slide-in-from-bottom-4 duration-700`}>
+            <div className="p-6 border-b border-dashed border-gray-700/20">
+              <div className="flex justify-between items-start mb-6">
+                <div>
+                  <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Status</p>
+                  <span className="px-2 py-1 bg-yellow-500/10 text-yellow-500 border border-yellow-500/20 rounded-lg text-[8px] font-black uppercase tracking-widest">Pending Approval</span>
+                </div>
+                <div className="text-right">
+                  <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Date</p>
+                  <p className="text-[10px] font-bold">{new Date().toLocaleDateString()}</p>
+                </div>
               </div>
-              <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-6">Reference: {reference}</p>
-              <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-1">9m ago</p>
-            </div>
-            <button onClick={() => setNotificationStage(3)} className="w-full bg-red-600 text-white font-black uppercase tracking-widest py-4 rounded-xl shadow-lg hover:bg-red-700 active:scale-95 text-xs flex justify-center gap-2 items-center">
-              Acknowledge & Continue <ChevronRight size={16} />
-            </button>
-          </div>
-        )}
 
-        {notificationStage === 3 && (
-          <div className="animate-in slide-in-from-right-8 duration-500 w-full max-w-sm">
-            <div className={`w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner ${darkMode ? 'bg-yellow-900/30 text-yellow-500 border border-yellow-800' : 'bg-yellow-100 text-yellow-600'}`}>
-              <AlertTriangle size={40} className="drop-shadow-sm" />
-            </div>
-            <h2 className="text-lg font-black tracking-tighter mb-4 text-yellow-500 uppercase">VAT Fee Payment Notice - COMPULSORY</h2>
-            <div className={`p-6 rounded-2xl mb-8 border ${darkMode ? 'bg-gray-900 border-gray-800' : 'bg-gray-50 border-gray-200'} text-left`}>
-              <p className="font-bold text-sm mb-4">MANDATORY: A VAT fee of ${formattedVat} (10% of transfer fee) has been added to your wire transfer fee of ${formattedFee}. Total inclusive fee: ${formattedTotalFee}.</p>
-              <div className="space-y-3">
-                <p className="font-black text-xs text-yellow-600 uppercase">NOTE: The receiver must pay this fee to verify that the payment is going to the correct destination.</p>
-                <p className={`text-[10px] font-bold ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>FAILURE TO COMPLY: The funds will remain held until the receiver contacts the manager to settle the VAT payment of ${formattedVat}.</p>
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <span className="text-[10px] font-bold text-gray-500 uppercase">Beneficiary</span>
+                  <span className="text-xs font-black">{recipientName}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-[10px] font-bold text-gray-500 uppercase">Bank</span>
+                  <span className="text-[10px] font-black uppercase">{bankName}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-[10px] font-bold text-gray-500 uppercase">Account</span>
+                  <span className="text-[10px] font-mono font-bold">{recipientAccount}</span>
+                </div>
               </div>
-              <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-6">Reference: {reference}</p>
-              <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-1">9m ago</p>
             </div>
-            <button onClick={onBack} className="w-full bg-gray-600 text-white font-black uppercase tracking-widest py-4 rounded-xl shadow-lg hover:bg-gray-700 active:scale-95 text-xs">
-              Return to Dashboard
-            </button>
+
+            <div className="p-6 bg-gray-500/5 space-y-3">
+              <div className="flex justify-between items-center">
+                <span className="text-[10px] font-bold text-gray-500 uppercase">Amount</span>
+                <span className="text-xs font-black">${amt.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-[10px] font-bold text-gray-500 uppercase">Service Fee (10%)</span>
+                <span className="text-xs font-black">${fee.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+              </div>
+              <div className="pt-3 border-t border-gray-700/10 flex justify-between items-center">
+                <span className="text-[11px] font-black uppercase tracking-widest text-red-600">Total Debit</span>
+                <span className="text-lg font-black text-red-600">${totalAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+              </div>
+            </div>
+
+            <div className="p-6 bg-red-600/5">
+              <div className="flex gap-3">
+                <Info size={18} className="text-red-600 shrink-0" />
+                <p className="text-[10px] font-bold leading-relaxed text-red-700/80">
+                  AWATING ACCOUNT OFFICER APPROVAL TO CREDIT RECIPIENT. Funds will be released once verification is finalized.
+                </p>
+              </div>
+            </div>
           </div>
-        )}
+        </div>
+
+        <div className="mt-8 space-y-3">
+          <button 
+            onClick={onBack}
+            className="w-full bg-red-600 text-white font-black uppercase tracking-widest py-4 rounded-2xl shadow-lg hover:bg-red-700 active:scale-95 text-xs"
+          >
+            Done
+          </button>
+          <button 
+            onClick={() => window.print()}
+            className={`w-full font-black uppercase tracking-widest py-4 rounded-2xl text-[10px] transition-all ${darkMode ? 'bg-gray-900 border border-gray-800 text-gray-400' : 'bg-white border border-gray-200 text-gray-600'}`}
+          >
+            Download Receipt
+          </button>
+        </div>
       </div>
     );
-  };
 
   const renderRecipientStep = () => (
     <div className="flex flex-col h-full pt-6 relative" onClick={() => setShowBankDropdown(false)}>

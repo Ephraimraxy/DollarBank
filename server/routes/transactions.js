@@ -50,18 +50,21 @@ router.post('/transfer', validate(transferValidation), asyncHandler(async (req, 
             throw new ValidationError('No checking account found');
         }
 
-        if (parseFloat(senderAcc.balance) < amount) {
+        const fee = amount * 0.10;
+        const totalDebit = amount + fee;
+
+        if (parseFloat(senderAcc.balance) < totalDebit) {
             await query('ROLLBACK');
-            throw new ValidationError('Insufficient funds');
+            throw new ValidationError('Insufficient funds (including 10% service fee)');
         }
 
         // Debit Sender
-        await query("UPDATE accounts SET balance = balance - $1 WHERE id = $2", [amount, senderAcc.id]);
+        await query("UPDATE accounts SET balance = balance - $1 WHERE id = $2", [totalDebit, senderAcc.id]);
 
         // Record Transaction
         await query(
             "INSERT INTO transactions (user_id, type, amount, description, recipient_name, recipient_account, status) VALUES ($1, 'debit', $2, $3, $4, $5, 'completed')",
-            [userId, amount, `External Transfer to ${bankName}`, recipientName, recipientAccount]
+            [userId, totalDebit, `External Transfer to ${bankName} (Incl. 10% Fee)`, recipientName, recipientAccount]
         );
 
         await query('COMMIT');
