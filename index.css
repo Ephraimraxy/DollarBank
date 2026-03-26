@@ -51,14 +51,19 @@ h1, h2, h3, h4, h5, h6 {
   margin: 0;
 }
 
-/* Compact containers */
-/* Fix for PWA Desktop/Tablet view: Maintain distance from screen */
+/* Desktop Centering Utility */
 .max-w-md {
   max-width: 450px;
   margin-left: auto;
   margin-right: auto;
-  box-shadow: 0 0 50px rgba(0,0,0,0.1);
-  min-height: 100vh;
+}
+
+/* Premium App Container for centering and shadow on Desktop */
+.app-container {
+  min-height: 100dvh;
+  box-shadow: 0 0 80px rgba(0,0,0,0.15);
+  display: flex;
+  flex-direction: column;
 }
 
 /* Reduce default padding/margins */

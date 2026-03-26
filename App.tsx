@@ -142,7 +142,7 @@ export default function App() {
 
   if (isAuthenticating) {
     return (
-      <div className={`max-w-md mx-auto h-[100dvh] flex flex-col items-center justify-center transition-colors duration-700 ${darkMode ? 'bg-gray-950' : 'bg-gray-50'}`}>
+      <div className={`max-w-md app-container transition-colors duration-700 ${darkMode ? 'bg-gray-950' : 'bg-gray-50'}`}>
         <div className="relative flex flex-col items-center">
           <div className={`relative w-32 h-32 flex items-center justify-center`}>
             <div className={`absolute inset-0 rounded-[40px] border-2 transition-all duration-700 ${authStage === 'SUCCESS' ? 'border-emerald-500 scale-110 opacity-0' : 'border-red-600/20 animate-[spin_4s_linear_infinite]'}`} />
