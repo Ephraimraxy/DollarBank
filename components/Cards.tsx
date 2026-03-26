@@ -2,10 +2,11 @@ import React, { useState } from 'react';
 import { ChevronRight, Cpu, Eye, Lock, Settings, ShieldAlert, ShoppingBag, Smartphone, Unlock, Wifi } from 'lucide-react';
 
 interface Props {
+  user: { fullName: string };
   darkMode: boolean;
 }
 
-export default function Cards({ darkMode }: Props) {
+export default function Cards({ user, darkMode }: Props) {
   const [isLocked, setIsLocked] = useState(false);
   const [showCardNumber, setShowCardNumber] = useState(false);
 
@@ -58,7 +59,7 @@ export default function Cards({ darkMode }: Props) {
             <div className="flex justify-between items-start">
               <div>
                 <div className="text-[10px] font-black uppercase tracking-[0.3em] opacity-80">Platinum Private</div>
-                <div className="font-bold italic text-sm mt-1">Austin Keith</div>
+                <div className="font-bold italic text-sm mt-1">{user?.fullName || 'Austin Keith'}</div>
               </div>
               <Wifi size={24} className="opacity-50 rotate-90" />
             </div>

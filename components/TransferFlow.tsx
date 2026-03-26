@@ -493,6 +493,7 @@ export default function TransferFlow({ onBack, darkMode }: Props) {
         </div>
       </div>
     );
+  };
 
   const renderRecipientStep = () => (
     <div className="flex flex-col h-full pt-6 relative" onClick={() => setShowBankDropdown(false)}>

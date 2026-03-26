@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { 
-  ArrowLeft, Camera, User, Mail, Phone, LogOut, 
-  ChevronRight, Shield, Bell, CheckCircle2, 
-  Globe, Moon, ShieldCheck, Save, X, Upload, Loader2
+  ArrowLeft, User, Mail, Phone, 
+  ChevronRight, ShieldCheck, Bell, CheckCircle2, 
+  Globe, Moon, Check, X, ArrowUpRight, RefreshCw
 } from 'lucide-react';
 import { api } from '../src/lib/api';
 
@@ -107,9 +107,18 @@ export default function Profile({ user, setUser, onBack, darkMode, setDarkMode, 
     return `https://ui-avatars.com/api/?name=${encodeURIComponent(user.fullName)}&size=120&background=dc2626&color=fff&bold=true`;
   };
 
-  const handleSave = () => {
-    setUser({ ...tempUser });
-    setIsEditing(false);
+  const handleSave = async () => {
+    try {
+      const result = await api.updateProfile({ 
+        fullName: tempUser.fullName, 
+        email: tempUser.email 
+      });
+      // Sync local user state
+      setUser({ ...user, ...tempUser, fullName: result.user.full_name, email: result.user.email });
+      setIsEditing(false);
+    } catch (err: any) {
+      alert(err.message || 'Failed to save profile');
+    }
   };
 
   const handleCancel = () => {
@@ -130,7 +139,7 @@ export default function Profile({ user, setUser, onBack, darkMode, setDarkMode, 
         {isEditing && (
           <div className="flex gap-2">
             <button onClick={handleCancel} className="p-2 text-gray-400"><X size={20} /></button>
-            <button onClick={handleSave} className="p-2 text-red-600 animate-pulse"><Save size={20} /></button>
+            <button onClick={handleSave} className="p-2 text-red-600 animate-pulse"><Check size={20} /></button>
           </div>
         )}
       </div>
@@ -159,7 +168,7 @@ export default function Profile({ user, setUser, onBack, darkMode, setDarkMode, 
               onClick={() => fileInputRef.current?.click()}
               className="absolute -bottom-2 -right-2 bg-red-600 text-white p-2.5 rounded-2xl shadow-lg hover:bg-red-700 transition-all active:scale-95"
             >
-              <Camera size={16} />
+              <User size={16} />
             </button>
             {profilePictureUrl && (
               <button
@@ -185,12 +194,12 @@ export default function Profile({ user, setUser, onBack, darkMode, setDarkMode, 
                   >
                     {isUploading ? (
                       <>
-                        <Loader2 size={12} className="animate-spin" />
+                        <RefreshCw size={12} className="animate-spin" />
                         Uploading...
                       </>
                     ) : (
                       <>
-                        <Upload size={12} />
+                        <ArrowUpRight size={12} />
                         Upload
                       </>
                     )}
@@ -251,7 +260,7 @@ export default function Profile({ user, setUser, onBack, darkMode, setDarkMode, 
           >
             <div className="flex items-center gap-3">
               <div className={`w-10 h-10 ${darkMode ? 'bg-red-600/20' : 'bg-red-100'} rounded-xl flex items-center justify-center`}>
-                <Shield className="text-red-600" size={18} />
+                <ShieldCheck className="text-red-600" size={18} />
               </div>
               <div className="text-left">
                 <div className="font-black text-sm tracking-tight">Admin Panel</div>
@@ -266,14 +275,14 @@ export default function Profile({ user, setUser, onBack, darkMode, setDarkMode, 
         <div className={`${darkMode ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-100'} rounded-[32px] shadow-sm border overflow-hidden`}>
           <div className={`px-5 py-3 text-[9px] font-black text-gray-400 uppercase tracking-widest border-b ${darkMode ? 'bg-gray-800/50' : 'bg-gray-50'} ${darkMode ? 'border-gray-800' : 'border-gray-100'}`}>Preferences</div>
           <PreferenceToggle icon={<Moon className="text-purple-500" size={18} />} label="Interface Theme" subLabel={darkMode ? "Dark Mode Active" : "Light Mode Active"} isActive={darkMode} onClick={() => setDarkMode(!darkMode)} darkMode={darkMode} />
-          <PreferenceToggle icon={<Shield className="text-blue-500" size={18} />} label="Biometric Sign-in" subLabel="Always On" isActive={true} onClick={() => {}} darkMode={darkMode} />
+          <PreferenceToggle icon={<ShieldCheck className="text-blue-500" size={18} />} label="Biometric Sign-in" subLabel="Always On" isActive={true} onClick={() => {}} darkMode={darkMode} />
         </div>
 
         <button 
           onClick={onLogout}
           className="w-full bg-red-600 text-white font-black uppercase tracking-widest py-4 rounded-2xl shadow-lg flex items-center justify-center gap-2 hover:bg-red-700 active:scale-95 transition-all text-xs"
         >
-           <LogOut size={16} />
+           <User size={16} />
            Terminate Session
         </button>
       </div>

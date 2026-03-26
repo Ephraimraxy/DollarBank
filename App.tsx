@@ -188,7 +188,7 @@ export default function App() {
       case ViewState.FEE_PAYMENT:
         return <FeePayment onBack={() => setCurrentView(ViewState.HOME)} darkMode={darkMode} />;
       case ViewState.CARDS:
-        return <Cards darkMode={darkMode} />;
+        return <Cards user={user} darkMode={darkMode} />;
       case ViewState.ACTIVITY:
         return <Activity onBack={() => setCurrentView(ViewState.HOME)} darkMode={darkMode} />;
       case ViewState.PROFILE:

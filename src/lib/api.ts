@@ -37,6 +37,7 @@ export const api = {
     getTransactions: () => api.request('/transactions'),
     transfer: (data: { amount: number; recipientName: string; bankName: string; recipientAccount: string }) => api.request('/transactions/transfer', 'POST', data),
     getProfile: () => api.request('/profile'),
+    updateProfile: (data: { fullName: string; email: string }) => api.request('/profile', 'PUT', data),
     uploadProfilePicture: (file: File) => {
         const formData = new FormData();
         formData.append('picture', file);

@@ -137,5 +137,31 @@ router.get('/', asyncHandler(async (req, res) => {
     res.json(result.rows[0]);
 }));
 
+// Update user profile
+router.put('/', asyncHandler(async (req, res) => {
+    const userId = req.user.id;
+    const { fullName, email } = req.body;
+
+    if (!fullName || !email) {
+        throw new ValidationError('Name and email are required');
+    }
+
+    // Update user in DB
+    const result = await query(
+        'UPDATE users SET full_name = $1, email = $2, updated_at = CURRENT_TIMESTAMP WHERE id = $3 RETURNING id, full_name, email, profile_picture_url, is_admin',
+        [fullName, email, userId]
+    );
+
+    if (result.rows.length === 0) {
+        throw new NotFoundError('User not found');
+    }
+
+    res.json({
+        success: true,
+        user: result.rows[0],
+        message: 'Profile updated successfully',
+    });
+}));
+
 export default router;
 
