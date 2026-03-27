@@ -125,73 +125,68 @@ export default function Activity({ onBack, darkMode }: Props) {
     if (!selectedTx) return null;
 
     return (
-      <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center pointer-events-none">
-        <div 
-            className="absolute inset-0 bg-black/60 backdrop-blur-sm pointer-events-auto transition-opacity"
-            onClick={() => setSelectedTx(null)}
-        ></div>
-        
-        <div className={`${darkMode ? 'bg-gray-900' : 'bg-white'} w-full max-w-md max-h-[85dvh] sm:max-h-[90vh] sm:rounded-3xl rounded-t-3xl p-6 relative pointer-events-auto transform transition-transform duration-300 flex flex-col shadow-2xl animate-in slide-in-from-bottom-full overflow-hidden`}>
-            <div className={`w-12 h-1.5 rounded-full mx-auto mb-6 sm:hidden ${darkMode ? 'bg-gray-800' : 'bg-gray-200'}`}></div>
+      <div className={`fixed inset-0 z-50 flex flex-col w-full max-w-md mx-auto ${darkMode ? 'bg-gray-950' : 'bg-gray-50'} animate-in slide-in-from-right duration-300 overflow-y-auto no-scrollbar`}>
+        {/* Header */}
+        <div className={`${darkMode ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-100'} px-4 py-3 flex items-center justify-between shadow-sm sticky top-0 z-40 border-b shrink-0`}>
+          <div className="flex items-center gap-3">
+            <button onClick={() => setSelectedTx(null)} className={`p-1 rounded-full transition-colors ${darkMode ? 'hover:bg-gray-800' : 'hover:bg-gray-100'}`}>
+              <ArrowLeft className={`w-6 h-6 ${darkMode ? 'text-gray-200' : 'text-gray-700'}`} />
+            </button>
+            <h1 className={`text-lg font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>Transaction Receipt</h1>
+          </div>
+        </div>
 
-            <div className="flex justify-between items-center mb-6">
-                <h2 className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>Transaction Receipt</h2>
-                <button onClick={() => setSelectedTx(null)} className={`p-2 rounded-full transition-colors ${darkMode ? 'bg-gray-800 hover:bg-gray-700' : 'bg-gray-100 hover:bg-gray-200'}`}>
-                    <X size={20} className={darkMode ? 'text-gray-300' : 'text-gray-600'} />
-                </button>
-            </div>
+        {/* Content area */}
+        <div className={`flex-1 p-6 flex flex-col pb-10 ${darkMode ? 'bg-gray-950' : 'bg-gray-50'}`}>
+          <div className="flex flex-col items-center mb-8 mt-4">
+              <div className={`w-20 h-20 rounded-full flex items-center justify-center mb-5 ${
+                  selectedTx.status === 'Success' 
+                    ? (darkMode ? 'bg-green-500/10 text-green-500 shadow-[0_0_30px_rgba(34,197,94,0.1)]' : 'bg-green-100 text-green-600') 
+                    : (darkMode ? 'bg-orange-500/10 text-orange-500 shadow-[0_0_30px_rgba(249,115,22,0.1)]' : 'bg-orange-100 text-orange-600')
+              }`}>
+                  {selectedTx.status === 'Success' ? <CheckCircle size={40} /> : <Clock size={40} />}
+              </div>
+              <div className={`text-4xl font-extrabold mb-3 tracking-tight ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                  {selectedTx.type === 'debit' ? '-' : '+'}${Math.abs(selectedTx.amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </div>
+              <div className={`text-xs font-black uppercase tracking-wider px-4 py-1.5 rounded-full ${
+                  selectedTx.status === 'Success' 
+                    ? (darkMode ? 'bg-green-500/20 text-green-400 border border-green-500/20' : 'bg-green-100 text-green-700 border border-green-200') 
+                    : (darkMode ? 'bg-orange-500/20 text-orange-400 border border-orange-500/20' : 'bg-orange-100 text-orange-700 border border-orange-200')
+              }`}>
+                  {selectedTx.status}
+              </div>
+          </div>
 
-            <div className="flex-1 overflow-y-auto no-scrollbar">
-                <div className="flex flex-col items-center mb-8">
-                    <div className={`w-20 h-20 rounded-full flex items-center justify-center mb-4 ${
-                        selectedTx.status === 'Success' 
-                          ? (darkMode ? 'bg-green-500/10 text-green-500' : 'bg-green-100 text-green-600') 
-                          : (darkMode ? 'bg-orange-500/10 text-orange-500' : 'bg-orange-100 text-orange-600')
-                    }`}>
-                        {selectedTx.status === 'Success' ? <CheckCircle size={40} /> : <Clock size={40} />}
-                    </div>
-                    <div className={`text-3xl font-bold mb-1 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                        {selectedTx.type === 'debit' ? '-' : '+'}${Math.abs(selectedTx.amount).toFixed(2)}
-                    </div>
-                    <div className={`text-sm font-bold px-3 py-1 rounded-full ${
-                        selectedTx.status === 'Success' 
-                          ? (darkMode ? 'bg-green-500/20 text-green-400' : 'bg-green-100 text-green-700') 
-                          : (darkMode ? 'bg-orange-500/20 text-orange-400' : 'bg-orange-100 text-orange-700')
-                    }`}>
-                        {selectedTx.status}
-                    </div>
-                </div>
+          <div className={`space-y-4 flex-1 mb-8 border-t pt-8 ${darkMode ? 'border-gray-800' : 'border-gray-200'}`}>
+              <div className={`flex justify-between py-3 border-b ${darkMode ? 'border-gray-800/50' : 'border-gray-100'}`}>
+                  <span className="text-gray-500 text-sm font-medium">To / From</span>
+                  <span className={`font-bold text-sm ${darkMode ? 'text-gray-200' : 'text-gray-900'}`}>{selectedTx.name}</span>
+              </div>
+              <div className={`flex justify-between py-3 border-b ${darkMode ? 'border-gray-800/50' : 'border-gray-100'}`}>
+                  <span className="text-gray-500 text-sm font-medium">Date</span>
+                  <span className={`font-semibold text-sm ${darkMode ? 'text-gray-200' : 'text-gray-900'}`}>{selectedTx.date}, {selectedTx.time}</span>
+              </div>
+              <div className={`flex justify-between py-3 border-b ${darkMode ? 'border-gray-800/50' : 'border-gray-100'}`}>
+                  <span className="text-gray-500 text-sm font-medium">Category</span>
+                  <span className={`font-semibold text-sm ${darkMode ? 'text-gray-200' : 'text-gray-900'}`}>{selectedTx.category}</span>
+              </div>
+              <div className={`flex justify-between py-3 border-b ${darkMode ? 'border-gray-800/50' : 'border-gray-100'}`}>
+                  <span className="text-gray-500 text-sm font-medium">Reference Number</span>
+                  <span className={`font-mono text-[11px] font-bold px-2 py-1 rounded ${darkMode ? 'bg-gray-800 text-gray-300' : 'bg-gray-100 text-gray-700'}`}>{selectedTx.reference}</span>
+              </div>
+          </div>
 
-                <div className={`space-y-4 border-t pt-6 ${darkMode ? 'border-gray-800' : 'border-gray-100'}`}>
-                    <div className={`flex justify-between py-2 border-b ${darkMode ? 'border-gray-800/50' : 'border-gray-50'}`}>
-                        <span className="text-gray-500 text-sm">To / From</span>
-                        <span className={`font-bold ${darkMode ? 'text-gray-200' : 'text-gray-900'}`}>{selectedTx.name}</span>
-                    </div>
-                    <div className={`flex justify-between py-2 border-b ${darkMode ? 'border-gray-800/50' : 'border-gray-50'}`}>
-                        <span className="text-gray-500 text-sm">Date</span>
-                        <span className={`font-semibold ${darkMode ? 'text-gray-200' : 'text-gray-900'}`}>{selectedTx.date}, {selectedTx.time}</span>
-                    </div>
-                    <div className={`flex justify-between py-2 border-b ${darkMode ? 'border-gray-800/50' : 'border-gray-50'}`}>
-                        <span className="text-gray-500 text-sm">Category</span>
-                        <span className={`font-semibold ${darkMode ? 'text-gray-200' : 'text-gray-900'}`}>{selectedTx.category}</span>
-                    </div>
-                    <div className={`flex justify-between py-2 border-b ${darkMode ? 'border-gray-800/50' : 'border-gray-50'}`}>
-                        <span className="text-gray-500 text-sm">Reference</span>
-                        <span className={`font-mono text-xs px-2 py-1 rounded ${darkMode ? 'bg-gray-800 text-gray-400' : 'bg-gray-100 text-gray-600'}`}>{selectedTx.reference}</span>
-                    </div>
-                </div>
-            </div>
-
-            <div className="mt-6 flex gap-3">
-                <button className={`flex-1 py-3 px-4 rounded-xl border flex items-center justify-center gap-2 font-semibold transition-colors ${darkMode ? 'border-gray-800 bg-gray-800 text-gray-300 hover:bg-gray-700' : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50'}`}>
-                    <Download size={18} />
-                    <span>PDF</span>
-                </button>
-                <button className={`flex-1 py-3 px-4 rounded-xl flex items-center justify-center gap-2 font-semibold transition-colors ${darkMode ? 'bg-white text-gray-900 hover:bg-gray-100' : 'bg-gray-900 text-white hover:bg-black'}`}>
-                    <Share2 size={18} />
-                    <span>Share</span>
-                </button>
-            </div>
+          <div className="mt-auto flex gap-3 px-1 sm:px-2 pt-4">
+              <button className={`flex-1 py-4 px-2 sm:px-4 rounded-xl border flex items-center justify-center gap-2 font-bold transition-all active:scale-95 ${darkMode ? 'border-gray-800 bg-gray-900 text-gray-300 hover:bg-gray-800' : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50 shadow-sm'}`}>
+                  <Download size={18} />
+                  <span className="text-sm">Save PDF</span>
+              </button>
+              <button className={`flex-1 py-4 px-2 sm:px-4 rounded-xl flex items-center justify-center gap-2 font-bold transition-all active:scale-95 shadow-lg ${darkMode ? 'bg-white text-gray-900 hover:bg-gray-100 shadow-white/5' : 'bg-red-600 text-white hover:bg-red-700 shadow-red-600/20'}`}>
+                  <Share2 size={18} />
+                  <span className="text-sm">Share Receipt</span>
+              </button>
+          </div>
         </div>
       </div>
     );
