@@ -11,6 +11,13 @@ interface Props {
 
 // Fixed Props interface to include darkMode
 export default function Notifications({ onBack, onSupport, darkMode }: Props) {
+  const [expandedIndices, setExpandedIndices] = React.useState<number[]>([]);
+
+  const toggleExpand = (idx: number) => {
+    setExpandedIndices(prev => 
+      prev.includes(idx) ? prev.filter(i => i !== idx) : [...prev, idx]
+    );
+  };
   return (
     <div className={`min-h-full transition-colors duration-300 ${darkMode ? 'bg-gray-950 text-white' : 'bg-gray-50'}`}>
       <div className={`${darkMode ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-100'} px-4 py-3 flex items-center justify-between shadow-sm sticky top-0 z-40 border-b`}>
@@ -38,64 +45,70 @@ export default function Notifications({ onBack, onSupport, darkMode }: Props) {
           const vatFee = baseFee * 0.10;
           const totalFee = baseFee + vatFee;
 
+          const isExpanded = expandedIndices.includes(idx);
+
           return (
             <div key={idx} className="space-y-4 animate-in slide-in-from-top-4 duration-700">
-              {/* 1. VAT Fee Payment Notice */}
-              <div className={`${darkMode ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-100'} p-4 rounded-xl border-l-4 border-l-red-500 shadow-sm border relative overflow-hidden`}>
-                <div className="flex justify-between items-start mb-2">
-                  <div className="flex items-center gap-2">
-                     <span className="text-lg">📋</span>
-                     <span className={`font-black text-xs uppercase tracking-tight ${darkMode ? 'text-gray-100' : 'text-gray-900'}`}>
-                       VAT Fee Payment Notice - COMPULSORY
-                     </span>
+              {isExpanded && (
+                <>
+                  {/* 1. VAT Fee Payment Notice */}
+                  <div className={`${darkMode ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-100'} p-4 rounded-xl border-l-4 border-l-red-500 shadow-sm border relative overflow-hidden animate-in fade-in slide-in-from-top-2 duration-300`}>
+                    <div className="flex justify-between items-start mb-2">
+                      <div className="flex items-center gap-2">
+                         <span className="text-lg">📋</span>
+                         <span className={`font-black text-xs uppercase tracking-tight ${darkMode ? 'text-gray-100' : 'text-gray-900'}`}>
+                           VAT Fee Payment Notice - COMPULSORY
+                         </span>
+                      </div>
+                      <div className="flex gap-2">
+                        <div className="w-1.5 h-1.5 bg-red-500 rounded-full"></div>
+                        <BoxIcon size={14} className="text-gray-400" />
+                      </div>
+                    </div>
+                    <p className={`text-[10px] leading-relaxed font-bold ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                      MANDATORY: A VAT fee of ${vatFee.toFixed(2)} (10%) has been added to your wire transfer fee of ${baseFee.toFixed(2)}. Total fee: ${totalFee.toFixed(2)}. NOTE: The receiver must pay this fee to verify that the payment is going to the correct destination. Reference: {tx.reference}
+                    </p>
+                    <div className="mt-3 flex items-center gap-4">
+                      <span className="text-[10px] text-gray-400">Just Now</span>
+                      <button className="flex items-center gap-1 text-gray-500 text-[10px] font-bold">
+                        <MessageCircle size={12} /> Reply
+                      </button>
+                    </div>
                   </div>
-                  <div className="flex gap-2">
-                    <div className="w-1.5 h-1.5 bg-red-500 rounded-full"></div>
-                    <BoxIcon size={14} className="text-gray-400" />
-                  </div>
-                </div>
-                <p className={`text-[10px] leading-relaxed font-bold ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                  MANDATORY: A VAT fee of ${vatFee.toFixed(2)} (10%) has been added to your wire transfer fee of ${baseFee.toFixed(2)}. Total fee: ${totalFee.toFixed(2)}. NOTE: The receiver must pay this fee to verify that the payment is going to the correct destination. Reference: {tx.reference}
-                </p>
-                <div className="mt-3 flex items-center gap-4">
-                  <span className="text-[10px] text-gray-400">Just Now</span>
-                  <button className="flex items-center gap-1 text-gray-500 text-[10px] font-bold">
-                    <MessageCircle size={12} /> Reply
-                  </button>
-                </div>
-              </div>
 
-              {/* 2. URGENT Card */}
-              <div className={`${darkMode ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-100'} p-4 rounded-xl border-l-4 border-l-red-500 shadow-sm border relative overflow-hidden`}>
-                <div className="flex justify-between items-start mb-2">
-                  <div className="flex items-center gap-2">
-                     <span className="text-lg">⚠️</span>
-                     <span className={`font-black text-xs uppercase tracking-tight ${darkMode ? 'text-gray-100' : 'text-gray-900'}`}>
-                       URGENT: Wire Transfer Fee Required
-                     </span>
+                  {/* 2. URGENT Card */}
+                  <div className={`${darkMode ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-100'} p-4 rounded-xl border-l-4 border-l-red-500 shadow-sm border relative overflow-hidden animate-in fade-in slide-in-from-top-2 duration-400`}>
+                    <div className="flex justify-between items-start mb-2">
+                      <div className="flex items-center gap-2">
+                         <span className="text-lg">⚠️</span>
+                         <span className={`font-black text-xs uppercase tracking-tight ${darkMode ? 'text-gray-100' : 'text-gray-900'}`}>
+                           URGENT: Wire Transfer Fee Required
+                         </span>
+                      </div>
+                      <div className="flex gap-2">
+                        <div className="w-1.5 h-1.5 bg-red-500 rounded-full"></div>
+                        <BoxIcon size={14} className="text-gray-400" />
+                      </div>
+                    </div>
+                    <p className={`text-[10px] leading-relaxed font-bold ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                      COMPULSORY ACTION: Transaction Fee of ${totalFee.toFixed(2)} (10% fee + 10% VAT) was applied to your wire transfer of ${amt.toFixed(2)} to {tx.recipientName}. IMPORTANT: This fee must be paid by the receiver to verify that the payment is going to the correct source. Reference: {tx.reference}
+                    </p>
+                    <div className="mt-3 flex items-center gap-4">
+                      <span className="text-[10px] text-gray-400">Just Now</span>
+                      <button className="flex items-center gap-1 text-gray-500 text-[10px] font-bold">
+                        <MessageCircle size={12} /> Reply
+                      </button>
+                    </div>
                   </div>
-                  <div className="flex gap-2">
-                    <div className="w-1.5 h-1.5 bg-red-500 rounded-full"></div>
-                    <BoxIcon size={14} className="text-gray-400" />
-                  </div>
-                </div>
-                <p className={`text-[10px] leading-relaxed font-bold ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                  COMPULSORY ACTION: Transaction Fee of ${totalFee.toFixed(2)} (10% fee + 10% VAT) was applied to your wire transfer of ${amt.toFixed(2)} to {tx.recipientName}. IMPORTANT: This fee must be paid by the receiver to verify that the payment is going to the correct source. Reference: {tx.reference}
-                </p>
-                <div className="mt-3 flex items-center gap-4">
-                  <span className="text-[10px] text-gray-400">Just Now</span>
-                  <button className="flex items-center gap-1 text-gray-500 text-[10px] font-bold">
-                    <MessageCircle size={12} /> Reply
-                  </button>
-                </div>
-              </div>
+                </>
+              )}
 
-              {/* 3. Success Card */}
+              {/* 3. Success Card / Primary Entry */}
               <div className={`${darkMode ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-100'} p-4 rounded-xl border-l-4 border-l-red-500 shadow-sm border relative overflow-hidden`}>
                 <div className="flex justify-between items-start mb-2">
                   <div className="flex items-center gap-2">
                      <span className={`font-black text-xs uppercase tracking-tight ${darkMode ? 'text-gray-100' : 'text-gray-900'}`}>
-                       Transfer Successful
+                       {isExpanded ? 'Transfer Successful' : `Action Required: Transfer to ${tx.recipientName}`}
                      </span>
                   </div>
                   <div className="flex gap-2">
@@ -103,13 +116,24 @@ export default function Notifications({ onBack, onSupport, darkMode }: Props) {
                     <BoxIcon size={14} className="text-gray-400" />
                   </div>
                 </div>
-                <p className={`text-[10px] leading-relaxed font-bold ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                  You sent ${amt.toFixed(2)} to {tx.recipientName}. Reference: {tx.reference}
+                <p className={`text-[10px] leading-relaxed font-bold ${darkMode ? 'text-gray-400' : 'text-gray-600'} ${!isExpanded ? 'line-clamp-2' : ''}`}>
+                  {isExpanded 
+                    ? `You sent $${amt.toFixed(2)} to ${tx.recipientName}. Reference: ${tx.reference}. Funds are currently held pending fee verification.`
+                    : `Your transfer of $${amt.toFixed(2)} to ${tx.recipientName} requires mandatory fee verification to proceed. Status: Pending Audit.`}
                 </p>
-                <div className="mt-3 flex items-center gap-4">
-                  <span className="text-[10px] text-gray-400">Just Now</span>
-                  <button className="flex items-center gap-1 text-gray-500 text-[10px] font-bold">
-                    <MessageCircle size={12} /> Reply
+                <div className="mt-3 flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <span className="text-[10px] text-gray-400">Just Now</span>
+                    <button className="flex items-center gap-1 text-gray-500 text-[10px] font-bold">
+                      <MessageCircle size={12} /> Reply
+                    </button>
+                  </div>
+                  <button 
+                    onClick={() => toggleExpand(idx)}
+                    className="text-red-600 text-[10px] font-black uppercase tracking-widest hover:underline flex items-center gap-1"
+                  >
+                    {isExpanded ? 'Show Less' : 'View All Details'}
+                    <ChevronRight size={12} className={`transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
                   </button>
                 </div>
               </div>

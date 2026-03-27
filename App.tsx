@@ -3,6 +3,7 @@ import { Home, ArrowRightLeft, CreditCard, TrendingUp, FileText, Bell, User, Men
 import Dashboard from './components/Dashboard';
 import TransferFlow from './components/TransferFlow';
 import Notifications from './components/Notifications';
+import NotificationDropdown from './components/NotificationDropdown';
 import FeePayment from './components/FeePayment';
 import Support from './components/Support';
 import Cards from './components/Cards';
@@ -67,6 +68,7 @@ export default function App() {
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [authStage, setAuthStage] = useState<'SCANNING' | 'SUCCESS'>('SCANNING');
   const [adminTab, setAdminTab] = useState<any>('dashboard');
+  const [showNotifDropdown, setShowNotifDropdown] = useState(false);
 
   useEffect(() => {
     localStorage.setItem('vault-id-dark-mode', JSON.stringify(darkMode));
@@ -113,7 +115,7 @@ export default function App() {
         
         {!user.isAdmin && (
           <button
-            onClick={() => setCurrentView(ViewState.NOTIFICATIONS)}
+            onClick={() => setShowNotifDropdown(prev => !prev)}
             className={`relative p-1.5 rounded-lg transition-all active:scale-90 ${darkMode ? 'hover:bg-gray-800' : 'hover:bg-gray-100'}`}
           >
             <Bell className={`w-4 h-4 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`} />
@@ -228,6 +230,17 @@ export default function App() {
         <main className="flex-1 overflow-y-auto no-scrollbar pb-16">
           {renderContent()}
         </main>
+
+        {showNotifDropdown && (
+          <NotificationDropdown
+            darkMode={darkMode}
+            onClose={() => setShowNotifDropdown(false)}
+            onViewAll={() => {
+              setShowNotifDropdown(false);
+              setCurrentView(ViewState.NOTIFICATIONS);
+            }}
+          />
+        )}
 
         {!isAuthView && <AiAssistant user={user} darkMode={darkMode} />}
 
