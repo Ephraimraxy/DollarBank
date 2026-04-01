@@ -30,6 +30,9 @@ export const config = {
     isProduction: process.env.NODE_ENV === 'production',
     isDevelopment: process.env.NODE_ENV === 'development',
 
+    // Maintenance Mode
+    maintenanceMode: process.env.MAINTENANCE_MODE === 'true',
+
     // Database
     databaseUrl: process.env.DATABASE_URL,
 

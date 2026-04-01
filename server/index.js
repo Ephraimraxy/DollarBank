@@ -25,6 +25,9 @@ import {
     requestSizeLimit,
 } from './middleware/security.js';
 
+// Maintenance mode middleware
+import { maintenanceGuard } from './middleware/maintenance.js';
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -36,6 +39,9 @@ app.set('trust proxy', 1);
 // Security middleware (must be first)
 app.use(securityHeaders);
 app.use(enforceHttps);
+
+// Maintenance mode guard (blocks everything except health checks when enabled)
+app.use(maintenanceGuard);
 
 // Compression
 app.use(compression());
@@ -85,11 +91,23 @@ app.use(sanitizeInput);
 
 // Health check endpoints (before rate limiting)
 app.get('/api/health', async (req, res) => {
+    // If maintenance mode is ON, return 200 with maintenance flag
+    // (200 keeps Railway health checks happy; frontend detects via the maintenance field)
+    if (config.maintenanceMode) {
+        return res.json({
+            status: 'maintenance',
+            maintenance: true,
+            message: 'Vault ID is currently undergoing scheduled maintenance.',
+            timestamp: new Date().toISOString(),
+        });
+    }
+
     try {
         // Check database connection
         await query('SELECT NOW()');
         res.json({
             status: 'healthy',
+            maintenance: false,
             timestamp: new Date().toISOString(),
             uptime: process.uptime(),
             environment: config.nodeEnv,
@@ -98,6 +116,7 @@ app.get('/api/health', async (req, res) => {
         logger.error('Health check failed:', err);
         res.status(503).json({
             status: 'unhealthy',
+            maintenance: false,
             timestamp: new Date().toISOString(),
             error: 'Database connection failed',
         });
@@ -185,6 +204,7 @@ async function startServer() {
             logger.info(`🚀 Server is running on port ${config.port}`);
             logger.info(`📝 Environment: ${config.nodeEnv}`);
             logger.info(`🔒 HTTPS enforcement: ${config.enforceHttps}`);
+            logger.info(`🔧 Maintenance mode: ${config.maintenanceMode ? 'ON' : 'OFF'}`);
             logger.info(`🌐 Allowed origins: ${config.allowedOrigins.join(', ')}`);
             logger.info(`🌍 Listening on 0.0.0.0:${config.port} (Railway compatible)`);
         });

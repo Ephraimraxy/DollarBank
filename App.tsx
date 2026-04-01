@@ -19,10 +19,32 @@ import VerifyOTP from './components/VerifyOTP';
 import ResetPassword from './components/ResetPassword';
 import NetworkIndicator from './components/NetworkIndicator';
 import NetworkWarning from './components/NetworkWarning';
+import MaintenancePage from './components/MaintenancePage';
 import { ViewState } from './types';
 import { ErrorBoundary } from './components/ErrorBoundary';
 
 export default function App() {
+  const [isMaintenanceMode, setIsMaintenanceMode] = useState(false);
+
+  // Check for maintenance mode on mount and poll every 30s
+  useEffect(() => {
+    let timer: ReturnType<typeof setInterval>;
+
+    const checkMaintenance = async () => {
+      try {
+        const res = await fetch('/api/health');
+        const data = await res.json().catch(() => ({}));
+        setIsMaintenanceMode(data.maintenance === true);
+      } catch {
+        // Network error — don't flip to maintenance (could just be offline)
+      }
+    };
+
+    checkMaintenance();
+    timer = setInterval(checkMaintenance, 30000);
+    return () => clearInterval(timer);
+  }, []);
+
   const [currentView, setCurrentView] = useState<ViewState>(() => {
     const isAuth = localStorage.getItem('vault-session-active');
 
@@ -220,6 +242,11 @@ export default function App() {
     ViewState.VERIFY_OTP,
     ViewState.RESET_PASSWORD,
   ].includes(currentView);
+
+  // Show maintenance page when server is in maintenance mode
+  if (isMaintenanceMode) {
+    return <MaintenancePage />;
+  }
 
   return (
     <ErrorBoundary>
