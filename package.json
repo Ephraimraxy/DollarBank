@@ -8,7 +8,6 @@
     "build": "vite build",
     "preview": "vite preview",
     "start": "node server/index.js",
-    "postinstall": "npm run build",
     "db:init": "node server/initDb.js",
     "db:seed": "node server/seed.js",
     "db:migrate": "node server/initDb.js",
