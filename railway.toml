@@ -1,6 +1,9 @@
 [build]
 builder = "nixpacks"
 
+[env]
+NIXPACKS_INSTALL_CMD = "npm install"
+
 [deploy]
 startCommand = "npm start"
 restartPolicyType = "on_failure"
@@ -10,5 +13,3 @@ restartPolicyMaxRetries = 10
 path = "/api/health"
 timeout = 100
 interval = 300
-
-
