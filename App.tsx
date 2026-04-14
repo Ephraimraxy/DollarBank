@@ -170,7 +170,7 @@ export default function App() {
 
   if (isAuthenticating) {
     return (
-      <div className={`max-w-md app-container transition-colors duration-700 ${darkMode ? 'bg-gray-950' : 'bg-gray-50'}`}>
+      <div className={`w-full h-[100dvh] flex items-center justify-center transition-colors duration-700 ${darkMode ? 'bg-gray-950' : 'bg-gray-50'}`}>
         <div className="relative flex flex-col items-center">
           <div className={`relative w-32 h-32 flex items-center justify-center`}>
             <div className={`absolute inset-0 rounded-[40px] border-2 transition-all duration-700 ${authStage === 'SUCCESS' ? 'border-emerald-500 scale-110 opacity-0' : 'border-red-600/20 animate-[spin_4s_linear_infinite]'}`} />
@@ -250,13 +250,41 @@ export default function App() {
 
   return (
     <ErrorBoundary>
-      <div className={`max-w-md mx-auto h-[100dvh] flex flex-col overflow-hidden shadow-2xl relative transition-colors duration-300 ${darkMode ? 'bg-gray-950' : 'bg-gray-50'}`}>
+      <div className={`w-full h-[100dvh] flex flex-col overflow-hidden transition-colors duration-300 ${darkMode ? 'bg-gray-950' : 'bg-gray-50'}`}>
         {!isAuthView && <Header />}
         {!isAuthView && <NetworkWarning darkMode={darkMode} />}
 
-        <main className="flex-1 overflow-y-auto no-scrollbar pb-16">
-          {renderContent()}
-        </main>
+        <div className="flex flex-1 overflow-hidden">
+          {/* Desktop sidebar — regular users */}
+          {!isAuthView && !user.isAdmin && (
+            <aside className={`hidden lg:flex flex-col w-52 flex-shrink-0 border-r py-4 px-3 gap-0.5 ${darkMode ? 'bg-gray-950 border-gray-800/60' : 'bg-white border-gray-100'}`}>
+              <SidebarNavItem icon={<Home size={17} />} label="Home" isActive={currentView === ViewState.HOME} onClick={() => setCurrentView(ViewState.HOME)} darkMode={darkMode} />
+              <SidebarNavItem icon={<ArrowRightLeft size={17} />} label="Transfer" isActive={currentView === ViewState.TRANSFER} onClick={() => setCurrentView(ViewState.TRANSFER)} darkMode={darkMode} />
+              <SidebarNavItem icon={<CreditCard size={17} />} label="Cards" isActive={currentView === ViewState.CARDS} onClick={() => setCurrentView(ViewState.CARDS)} darkMode={darkMode} />
+              <SidebarNavItem icon={<TrendingUp size={17} />} label="Invest" isActive={currentView === ViewState.INVEST} onClick={() => setCurrentView(ViewState.INVEST)} darkMode={darkMode} />
+              <SidebarNavItem icon={<FileText size={17} />} label="Activity" isActive={currentView === ViewState.ACTIVITY} onClick={() => setCurrentView(ViewState.ACTIVITY)} darkMode={darkMode} />
+            </aside>
+          )}
+
+          {/* Desktop sidebar — admin users */}
+          {!isAuthView && user.isAdmin && (
+            <aside className={`hidden lg:flex flex-col w-52 flex-shrink-0 border-r py-4 px-3 gap-0.5 ${darkMode ? 'bg-gray-950 border-gray-800/60' : 'bg-white border-gray-100'}`}>
+              <SidebarNavItem icon={<ShieldCheck size={17} />} label="Admin" isActive={adminTab === 'dashboard'} onClick={() => { setCurrentView(ViewState.ADMIN); setAdminTab('dashboard'); }} darkMode={darkMode} />
+              <SidebarNavItem icon={<User size={17} />} label="Users" isActive={adminTab === 'users'} onClick={() => { setCurrentView(ViewState.ADMIN); setAdminTab('users'); }} darkMode={darkMode} />
+              <SidebarNavItem icon={<CreditCard size={17} />} label="Accounts" isActive={adminTab === 'accounts'} onClick={() => { setCurrentView(ViewState.ADMIN); setAdminTab('accounts'); }} darkMode={darkMode} />
+              <SidebarNavItem icon={<ArrowRightLeft size={17} />} label="Transfers" isActive={adminTab === 'transactions'} onClick={() => { setCurrentView(ViewState.ADMIN); setAdminTab('transactions'); }} darkMode={darkMode} />
+              <SidebarNavItem icon={<TrendingUp size={17} />} label="Stats" isActive={adminTab === 'analytics'} onClick={() => { setCurrentView(ViewState.ADMIN); setAdminTab('analytics'); }} darkMode={darkMode} />
+              <SidebarNavItem icon={<Lock size={17} />} label="Security" isActive={false} onClick={() => {}} darkMode={darkMode} />
+              <div className="mt-auto">
+                <SidebarNavItem icon={<Menu size={17} />} label="Logout" isActive={false} onClick={handleLogout} darkMode={darkMode} />
+              </div>
+            </aside>
+          )}
+
+          <main className={`flex-1 overflow-y-auto no-scrollbar ${!isAuthView ? 'pb-16 lg:pb-4' : ''}`}>
+            {renderContent()}
+          </main>
+        </div>
 
         {showNotifDropdown && (
           <NotificationDropdown
@@ -271,8 +299,9 @@ export default function App() {
 
         {!isAuthView && <AiAssistant user={user} darkMode={darkMode} />}
 
+        {/* Mobile bottom nav — regular users */}
         {!isAuthView && !user.isAdmin && (
-          <div className={`border-t flex justify-around items-stretch px-1 fixed bottom-0 w-full max-w-md z-50 transition-all duration-500 h-[60px] ${darkMode
+          <div className={`lg:hidden border-t flex justify-around items-stretch px-1 fixed bottom-0 w-full z-50 transition-all duration-500 h-[60px] ${darkMode
             ? 'bg-gray-950/90 border-gray-800 backdrop-blur-xl shadow-[0_-10px_30px_rgba(0,0,0,0.5)]'
             : 'bg-white/90 border-gray-100 backdrop-blur-xl shadow-[0_-10px_30px_rgba(0,0,0,0.05)]'
             }`}>
@@ -284,8 +313,9 @@ export default function App() {
           </div>
         )}
 
+        {/* Mobile bottom nav — admin */}
         {!isAuthView && user.isAdmin && (
-          <div className={`border-t flex items-stretch px-2 fixed bottom-0 w-full max-w-md z-50 transition-all duration-500 h-[70px] overflow-x-auto no-scrollbar scroll-smooth ${darkMode
+          <div className={`lg:hidden border-t flex items-stretch px-2 fixed bottom-0 w-full z-50 transition-all duration-500 h-[70px] overflow-x-auto no-scrollbar scroll-smooth ${darkMode
             ? 'bg-gray-950/90 border-gray-800 backdrop-blur-xl shadow-[0_-10px_30px_rgba(0,0,0,0.5)]'
             : 'bg-white/90 border-gray-100 backdrop-blur-xl shadow-[0_-10px_30px_rgba(0,0,0,0.05)]'
             }`}>
@@ -304,6 +334,21 @@ export default function App() {
     </ErrorBoundary>
   );
 }
+
+const SidebarNavItem = ({ icon, label, isActive, onClick, darkMode }: any) => (
+  <button
+    onClick={onClick}
+    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-left ${
+      isActive
+        ? darkMode ? 'bg-red-500/10 text-red-500' : 'bg-red-50 text-red-600'
+        : darkMode ? 'text-gray-400 hover:bg-gray-800 hover:text-white' : 'text-gray-500 hover:bg-gray-100 hover:text-gray-900'
+    }`}
+  >
+    <span className={`flex-shrink-0 transition-transform duration-300 ${isActive ? 'scale-110 drop-shadow-[0_0_6px_rgba(220,38,38,0.4)]' : ''}`}>{icon}</span>
+    <span className="text-[10px] font-black uppercase tracking-[0.15em]">{label}</span>
+    {isActive && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-red-500 flex-shrink-0" />}
+  </button>
+);
 
 const NavButton = ({ icon, label, isActive, onClick, darkMode }: any) => (
   <button onClick={onClick} className="relative flex flex-col items-center justify-center flex-1 transition-all duration-300 outline-none group">

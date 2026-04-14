@@ -1,9 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import { ViewState } from '../types';
-import { Lock, User, ArrowLeft, ShieldCheck, RefreshCw, AlertTriangle, Eye, EyeOff, ChevronRight, Mail, Globe, Sun, Moon } from 'lucide-react';
+import { Lock, ArrowLeft, ShieldCheck, RefreshCw, AlertTriangle, Eye, EyeOff, Mail, Globe, Sun, Moon } from 'lucide-react';
 import { checkPasswordStrength, PasswordStrength } from '../src/lib/passwordStrength';
 import { api } from '../src/lib/api';
-import { ShoppingBag as DownloadIcon } from 'lucide-react';
 
 interface Props {
   currentView: ViewState;
@@ -22,28 +21,6 @@ export default function AuthFlow({ currentView, setView, onLogin, darkMode, setD
   const [error, setError] = useState('');
   const [info, setInfo] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
-
-  React.useEffect(() => {
-    window.addEventListener('beforeinstallprompt', (e) => {
-      e.preventDefault();
-      setDeferredPrompt(e);
-    });
-  }, []);
-
-  const handleInstall = async () => {
-    if (deferredPrompt) {
-      deferredPrompt.prompt();
-      const { outcome } = await deferredPrompt.userChoice;
-      if (outcome === 'accepted') {
-        setDeferredPrompt(null);
-      }
-    } else {
-      alert("To download: Tap the 'Share' or 'Menu' button in your browser and select 'Add to Home Screen'.");
-    }
-  };
-
-  const isStandalone = typeof window !== 'undefined' && window.matchMedia('(display-mode: standalone)').matches;
 
   // Calculate password strength
   const passwordStrength = useMemo(() => checkPasswordStrength(password), [password]);
@@ -82,40 +59,6 @@ export default function AuthFlow({ currentView, setView, onLogin, darkMode, setD
   };
 
   const renderSignIn = () => {
-    if (!isStandalone) {
-      return (
-        <div className="flex flex-col items-center justify-center min-h-[70vh] text-center animate-in fade-in duration-1000">
-          <div className="relative mb-12">
-            <div className="absolute -inset-10 bg-red-600/10 rounded-full blur-3xl animate-pulse"></div>
-            <div className={`relative w-24 h-24 rounded-3xl border-2 rotate-12 flex items-center justify-center shadow-2xl ${darkMode ? 'bg-gray-900 border-red-900/40' : 'bg-white border-red-100'}`}>
-              <ShieldCheck size={48} className="text-red-600 -rotate-12" />
-            </div>
-          </div>
-          
-          <h2 className={`text-3xl font-black tracking-tighter mb-3 leading-tight ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-            Secure Access Required
-          </h2>
-          <p className="text-xs text-gray-500 font-bold uppercase tracking-[0.2em] mb-8 max-w-[240px] mx-auto leading-relaxed">
-            Please install the Vault Desktop or Mobile app to access your secure assets.
-          </p>
-
-          <div className="w-full space-y-4 px-2">
-            <button 
-              onClick={handleInstall}
-              className="w-full bg-red-600 text-white font-black uppercase tracking-[0.2em] py-4 rounded-2xl shadow-[0_10px_40px_rgba(220,38,38,0.3)] hover:bg-red-700 active:scale-95 transition-all flex items-center justify-center gap-3 text-[11px]"
-            >
-              <DownloadIcon size={18} />
-              {deferredPrompt ? 'Download Native App' : 'Install Secure Vault'}
-            </button>
-            
-            <p className="text-[9px] text-gray-400 font-medium px-6">
-              Encrypted access is restricted to the native application environment for your security.
-            </p>
-          </div>
-        </div>
-      );
-    }
-
     return (
       <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
         <div className="mb-6">
@@ -267,24 +210,26 @@ export default function AuthFlow({ currentView, setView, onLogin, darkMode, setD
   );
 
   return (
-    <div className={`min-h-full p-4 flex flex-col transition-colors duration-300 ${darkMode ? 'bg-gray-950 text-white' : 'bg-gray-50'}`}>
-      <div className="mb-4 flex justify-between items-center">
-        {currentView !== ViewState.SIGN_IN && currentView !== ViewState.REVERIFY ? (
-          <button onClick={() => setView(ViewState.SIGN_IN)} className={`p-2 rounded-xl transition-colors ${darkMode ? 'hover:bg-gray-800 text-white' : 'hover:bg-gray-100 text-gray-900'}`}>
-            <ArrowLeft size={24} />
+    <div className={`min-h-full flex items-center justify-center transition-colors duration-300 ${darkMode ? 'bg-gray-950 text-white' : 'bg-gray-50'}`}>
+      <div className={`w-full max-w-sm p-6 lg:p-8 lg:rounded-2xl lg:shadow-2xl ${darkMode ? 'lg:bg-gray-900 lg:border lg:border-gray-800' : 'lg:bg-white lg:border lg:border-gray-100'}`}>
+        <div className="mb-4 flex justify-between items-center">
+          {currentView !== ViewState.SIGN_IN && currentView !== ViewState.REVERIFY ? (
+            <button onClick={() => setView(ViewState.SIGN_IN)} className={`p-2 rounded-xl transition-colors ${darkMode ? 'hover:bg-gray-800 text-white' : 'hover:bg-gray-100 text-gray-900'}`}>
+              <ArrowLeft size={24} />
+            </button>
+          ) : <div />}
+          <button
+            onClick={() => setDarkMode(!darkMode)}
+            className={`p-2 rounded-xl transition-colors ${darkMode ? 'hover:bg-gray-800 text-white' : 'hover:bg-gray-100 text-gray-900'}`}
+          >
+            {darkMode ? <Sun size={24} /> : <Moon size={24} />}
           </button>
-        ) : <div />}
-        <button
-          onClick={() => setDarkMode(!darkMode)}
-          className={`p-2 rounded-xl transition-colors ${darkMode ? 'hover:bg-gray-800 text-white' : 'hover:bg-gray-100 text-gray-900'}`}
-        >
-          {darkMode ? <Sun size={24} /> : <Moon size={24} />}
-        </button>
-      </div>
+        </div>
 
-      {currentView === ViewState.SIGN_IN && renderSignIn()}
-      {currentView === ViewState.FORGOT_PASSWORD && renderForgot()}
-      {currentView === ViewState.REVERIFY && renderReverify()}
+        {currentView === ViewState.SIGN_IN && renderSignIn()}
+        {currentView === ViewState.FORGOT_PASSWORD && renderForgot()}
+        {currentView === ViewState.REVERIFY && renderReverify()}
+      </div>
     </div>
   );
 }
